@@ -4,16 +4,13 @@ import { ThemedText } from "./ThemedText";
 
 type FormData = {
   email: string;
-  displayName: string;
   password: string;
-  confirmPassword: string;
 };
 
-export default function SignUpForm() {
+export default function LoginForm() {
   const {
     control,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<FormData>();
 
@@ -21,8 +18,6 @@ export default function SignUpForm() {
     console.log(data);
     Alert.alert("Form Submitted", JSON.stringify(data));
   };
-
-  const password = watch("password");
 
   return (
     <View>
@@ -47,24 +42,6 @@ export default function SignUpForm() {
         name="email"
       />
       {errors.email && <Text>{errors.email.message}</Text>}
-
-      <ThemedText>Display Name</ThemedText>
-      <Controller
-        control={control}
-        rules={{
-          required: true,
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            placeholder="User123"
-            onBlur={onBlur}
-            onChangeText={onChange}
-            value={value}
-          />
-        )}
-        name="displayName"
-      />
-      {errors.displayName && <Text>{errors.displayName.message}</Text>}
 
       <ThemedText>Password</ThemedText>
       <Controller
@@ -94,28 +71,9 @@ export default function SignUpForm() {
       />
       {errors.password && <Text>{errors.password.message}</Text>}
 
-      <ThemedText>Confirm Password</ThemedText>
-      <Controller
-        control={control}
-        rules={{
-          validate: (value) => value == password || "Passwords do not match",
-        }}
-        render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            onBlur={onBlur}
-            onChangeText={onChange}
-            placeholder="●●●●●●●●"
-            value={value}
-            secureTextEntry={true}
-          />
-        )}
-        name="confirmPassword"
-      />
-      {errors.confirmPassword && <Text>{errors.confirmPassword.message}</Text>}
-
       <Button
-        color="limegreen"
-        title="Sign Up"
+        color="slateblue"
+        title="Login"
         onPress={handleSubmit(onSubmit)}
       />
     </View>

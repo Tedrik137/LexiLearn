@@ -4,6 +4,7 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { ThemedText } from "@/components/ThemedText";
 import SignUpForm from "@/components/SignupForm";
+import LoginForm from "@/components/LoginForm";
 
 export default function AccountScreen() {
   return (
@@ -18,7 +19,7 @@ export default function AccountScreen() {
         />
       }
     >
-      <SignUpForm />
+      <LoginForm />
     </ParallaxScrollView>
   );
 }
