@@ -2,6 +2,8 @@ import { StyleSheet } from "react-native";
 
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { ThemedText } from "@/components/ThemedText";
+import SignUpForm from "@/components/SignupForm";
 
 export default function AccountScreen() {
   return (
@@ -15,7 +17,9 @@ export default function AccountScreen() {
           style={styles.headerImage}
         />
       }
-    ></ParallaxScrollView>
+    >
+      <SignUpForm />
+    </ParallaxScrollView>
   );
 }
 
