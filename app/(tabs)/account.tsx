@@ -5,12 +5,15 @@ import { ThemedText } from "@/components/ThemedText";
 import SignUpForm from "@/components/SignupForm";
 import LoginForm from "@/components/LoginForm";
 import CustomScrollView from "@/components/CustomScrollView";
+import ProfileGrid from "@/components/ProfileGrid";
 
 export default function AccountScreen() {
   return (
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-    ></CustomScrollView>
+    >
+      <ProfileGrid></ProfileGrid>
+    </CustomScrollView>
   );
 }
 
