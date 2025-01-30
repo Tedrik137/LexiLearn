@@ -1,46 +1,52 @@
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { TouchableOpacity, StyleSheet } from "react-native";
+import { Stack } from "expo-router";
+import React from "react";
+import { View, Text, FlatList, StyleSheet } from "react-native";
 
-export default function languages() {
+const data = [
+  { name: "English", level: "Fluent", placeholder: "Placeholder" },
+  { name: "Spanish", level: "Intermediate", placeholder: "Placeholder" },
+  { name: "French", level: "Beginner", placeholder: "Placeholder" },
+];
+
+const languages = () => {
   return (
-    <ThemedView style={[styles.container]}>
-      <TouchableOpacity style={[styles.button]}>
-        <ThemedText style={[styles.text]}>Languages</ThemedText>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.button]}>
-        <ThemedText style={[styles.text]}>Goals</ThemedText>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.button]}>
-        <ThemedText style={[styles.text]}>Offline Lessons</ThemedText>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.button]}>
-        <ThemedText style={[styles.text]}>Placeholder</ThemedText>
-      </TouchableOpacity>
-    </ThemedView>
+    <View style={styles.container}>
+      <View style={[styles.row, styles.header]}>
+        <Text style={styles.cell}>Language</Text>
+        <Text style={styles.cell}>Proficiency Level</Text>
+        <Text style={styles.cell}>Placeholder</Text>
+      </View>
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.name}
+        renderItem={({ item }) => (
+          <View style={styles.row}>
+            <Text style={styles.cell}>{item.name}</Text>
+            <Text style={styles.cell}>{item.level}</Text>
+            <Text style={styles.cell}>{item.placeholder}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { margin: 40 },
+  row: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 10,
   },
-  button: {
-    backgroundColor: "#3F51B5",
-    width: "46%",
-    height: 60,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 60,
-  },
-  text: {
+  header: {
+    backgroundColor: "#f1f8ff",
     fontWeight: "bold",
-    color: "white",
-    fontSize: 20,
+  },
+  cell: {
+    flex: 1,
+    textAlign: "center",
   },
 });
+
+export default languages;
