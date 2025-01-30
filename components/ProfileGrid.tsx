@@ -1,22 +1,42 @@
-import React, { PropsWithChildren } from "react";
 import { ThemedView } from "./ThemedView";
 import { StyleSheet, TouchableOpacity } from "react-native";
-import { useColorScheme } from "@/hooks/useColorScheme.web";
 import { ThemedText } from "./ThemedText";
+import { useRouter, Link } from "expo-router";
 
 export default function ProfileGrid() {
+  const router = useRouter();
+
+  const handlePress = (route: Parameters<typeof router.push>[0]) => {
+    // Add a slight delay before navigation
+    setTimeout(() => {
+      router.push(route);
+    }, 150); // Adjust the delay time as needed
+  };
+
   return (
     <ThemedView style={[styles.container]}>
-      <TouchableOpacity style={[styles.button]}>
+      <TouchableOpacity
+        style={[styles.button]}
+        onPress={() => handlePress("/languages")}
+      >
         <ThemedText style={[styles.text]}>Languages</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.button]}>
+      <TouchableOpacity
+        style={[styles.button]}
+        onPress={() => handlePress("/languages")}
+      >
         <ThemedText style={[styles.text]}>Goals</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.button]}>
+      <TouchableOpacity
+        style={[styles.button]}
+        onPress={() => handlePress("/languages")}
+      >
         <ThemedText style={[styles.text]}>Offline Lessons</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.button]}>
+      <TouchableOpacity
+        style={[styles.button]}
+        onPress={() => handlePress("/languages")}
+      >
         <ThemedText style={[styles.text]}>Placeholder</ThemedText>
       </TouchableOpacity>
     </ThemedView>

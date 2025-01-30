@@ -2,6 +2,8 @@ import { Image, StyleSheet, Platform } from "react-native";
 
 import CustomScrollView from "@/components/CustomScrollView";
 import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { Link } from "expo-router";
 
 export default function HomeScreen() {
   return (
