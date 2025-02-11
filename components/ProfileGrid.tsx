@@ -23,7 +23,7 @@ export default function ProfileGrid() {
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/languages")}
+        onPress={() => handlePress("/goals")}
       >
         <ThemedText style={[styles.text]}>Goals</ThemedText>
       </TouchableOpacity>
