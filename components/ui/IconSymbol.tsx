@@ -15,6 +15,9 @@ const MAPPING = {
   "chevron.left.forwardslash.chevron.right": "code",
   "chevron.right": "chevron-right",
   "cart.fill": "shopping-cart",
+  "widget.small.badge.plus": "add",
+  "bin.xmark": "delete",
+  xmark: "close",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

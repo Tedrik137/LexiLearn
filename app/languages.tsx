@@ -1,10 +1,9 @@
-import { Stack } from "expo-router";
 import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 
 const data = [
   { name: "English", level: "Fluent", placeholder: "Placeholder" },
-  { name: "Spanish", level: "Intermediate", placeholder: "Placeholder" },
+  { name: "Arabic", level: "Intermediate", placeholder: "Placeholder" },
   { name: "French", level: "Beginner", placeholder: "Placeholder" },
 ];
 
