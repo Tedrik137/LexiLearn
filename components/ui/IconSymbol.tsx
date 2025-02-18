@@ -18,6 +18,7 @@ const MAPPING = {
   "widget.small.badge.plus": "add",
   "bin.xmark": "delete",
   xmark: "close",
+  "speaker.3": "volume-up",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],
