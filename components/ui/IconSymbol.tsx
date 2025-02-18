@@ -16,6 +16,7 @@ const MAPPING = {
   "chevron.right": "chevron-right",
   "cart.fill": "shopping-cart",
   "widget.small.badge.plus": "add",
+  "bin.xmark": "delete",
   xmark: "close",
 } as Partial<
   Record<

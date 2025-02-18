@@ -1,6 +1,7 @@
 import { Collapsible } from "@/components/Collapsible";
 import React, { useEffect, useState, useCallback } from "react";
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -12,7 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 import { ThemedText } from "@/components/ThemedText";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import GoalModal from "@/components/GoalModal";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Goal = { id: string; text: string; checked: boolean };
 export type GoalValue = { key: string; goals: Goal[] };
@@ -145,7 +146,7 @@ const useGoals = () => {
     });
 
     // Send the goal to the backend (replace with your backend URL and API logic)
-    /*await fetch("https://api.example.com/goals", {
+    /* await fetch("https://api.example.com/goals", {
       method: "POST", // Use POST to create a new goal
       headers: {
         "Content-Type": "application/json",
@@ -171,6 +172,7 @@ const useGoals = () => {
                   updatedGoals.set(key, currentLanguage);
                 }
               } else {
+               console.error("Failed to add goal:", err)
               }
 
               return updatedGoals;
@@ -185,22 +187,102 @@ const useGoals = () => {
       });*/
   };
 
-  return { goals, setGoals, toggleCheckbox, addGoal /*saveGoals*/ };
+  const deleteGoal = async (languageKey: string, goalId: string) => {
+    let deletedGoal: Goal;
+
+    setGoals((prevGoals) => {
+      const updatedGoals = new Map(prevGoals);
+
+      if (updatedGoals.has(languageKey)) {
+        const languageData = updatedGoals.get(languageKey);
+
+        if (languageData) {
+          // Find the goal to delete
+          const updatedGoalList = languageData.goals.filter((goal) => {
+            if (goal.id === goalId) {
+              deletedGoal = goal; // Store the goal for rollback
+              return false; // Remove the goal
+            }
+            return true; // Keep other goals
+          });
+
+          // Update only if a goal was deleted
+          if (deletedGoal) {
+            updatedGoals.set(languageKey, {
+              ...languageData,
+              goals: updatedGoalList,
+            });
+          }
+        }
+      }
+
+      return updatedGoals;
+    });
+
+    /*
+    await fetch("https://api.example.com/goals", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ id: id }),
+    }).then(() => {
+      console.log("Successfully deleted goal.")
+    }).catch((err) => {
+      console.error("Error deleting goal");
+
+      if (deletedGoal) {
+        setGoals((prevGoals) => {
+        const revertedGoals = new Map(prevGoals);
+        const languageData = revertedGoals.get(languageKey);
+  
+        if (languageData) {
+          revertedGoals.set(languageKey, {
+            ...languageData,
+            goals: [...languageData.goals, deletedGoal], // Restore the deleted goal
+          });
+        }
+  
+        return revertedGoals;
+      });
+      }
+    })*/
+  };
+
+  return { goals, setGoals, toggleCheckbox, addGoal, deleteGoal /*saveGoals*/ };
 };
 
 const GoalsScreen = () => {
-  const { goals, toggleCheckbox, addGoal /*saveGoals */ } = useGoals();
+  const { goals, toggleCheckbox, addGoal, deleteGoal /*saveGoals */ } =
+    useGoals();
   const [addGoalKey, setGoalKey] = useState("");
-  const navigation = useNavigation();
+
+  /* const navigation = useNavigation();
 
   // Save goals when navigating away
-  /*
+
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", saveGoals);
     return unsubscribe;
   }, [navigation, saveGoals]);*/
 
   const [modalVisible, setModalVisible] = useState(false);
+
+  const deleteAlert = (key: string, id: string) =>
+    Alert.alert("Delete Goal", "Are you sure you want to delete this goal?", [
+      {
+        text: "No",
+        style: "cancel",
+      },
+      {
+        text: "Yes",
+        onPress: () => {
+          console.log("Yes");
+          deleteGoal(key, id);
+        },
+        style: "default",
+      },
+    ]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -241,6 +323,14 @@ const GoalsScreen = () => {
                     color={goal.checked ? "#4630EB" : undefined}
                   />
                   <Text style={styles.paragraph}>{goal.text}</Text>
+                  <TouchableOpacity
+                    style={[styles.delete]}
+                    onPress={() => {
+                      deleteAlert(item.key, goal.id);
+                    }}
+                  >
+                    <IconSymbol size={24} name="bin.xmark" color={"white"} />
+                  </TouchableOpacity>
                 </View>
               )}
             />
@@ -259,22 +349,23 @@ const styles = StyleSheet.create({
   section: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 4,
+    marginVertical: 5,
   },
   paragraph: {
-    fontSize: 17,
+    fontSize: 15,
   },
   checkbox: {
-    margin: 8,
+    marginRight: 15,
   },
   button: {
     backgroundColor: "#3F51B5",
-    borderRadius: 12,
+    borderRadius: 15,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     marginTop: 10,
+    marginBottom: 10,
     width: 140,
   },
   text: {
@@ -282,6 +373,15 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 19,
     marginLeft: 20,
+  },
+  delete: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "red",
+    borderRadius: 7,
+    height: 30,
+    width: 30,
+    marginLeft: 15,
   },
 });
 
