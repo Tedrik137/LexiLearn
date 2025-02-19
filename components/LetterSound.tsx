@@ -5,13 +5,14 @@ import { IconSymbol } from "./ui/IconSymbol";
 
 interface Props {
   letter: string;
+  playSound: (letter: string) => Promise<void>;
 }
 
-export default function LetterSound({ letter }: Props) {
+export default function LetterSound({ letter, playSound }: Props) {
   return (
     <TouchableHighlight
       underlayColor="#303F9F"
-      onPress={() => {}}
+      onPress={() => playSound(letter)}
       style={{ borderRadius: 15 }}
     >
       <ThemedView style={[styles.button]}>

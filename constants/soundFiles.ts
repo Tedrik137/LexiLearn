@@ -1,0 +1,32 @@
+import { SoundFiles } from "@/types/soundTypes";
+
+export const soundFiles: SoundFiles = {
+  en: {
+    a: require("../assets/alphabet_sounds/en/a.mp3"),
+    b: require("../assets/alphabet_sounds/en/b.mp3"),
+    c: require("../assets/alphabet_sounds/en/c.mp3"),
+    d: require("../assets/alphabet_sounds/en/d.mp3"),
+    e: require("../assets/alphabet_sounds/en/e.mp3"),
+    f: require("../assets/alphabet_sounds/en/f.mp3"),
+    g: require("../assets/alphabet_sounds/en/g.mp3"),
+    h: require("../assets/alphabet_sounds/en/h.mp3"),
+    i: require("../assets/alphabet_sounds/en/i.mp3"),
+    j: require("../assets/alphabet_sounds/en/j.mp3"),
+    k: require("../assets/alphabet_sounds/en/k.mp3"),
+    l: require("../assets/alphabet_sounds/en/l.mp3"),
+    m: require("../assets/alphabet_sounds/en/m.mp3"),
+    n: require("../assets/alphabet_sounds/en/n.mp3"),
+    o: require("../assets/alphabet_sounds/en/o.mp3"),
+    p: require("../assets/alphabet_sounds/en/p.mp3"),
+    q: require("../assets/alphabet_sounds/en/q.mp3"),
+    r: require("../assets/alphabet_sounds/en/r.mp3"),
+    s: require("../assets/alphabet_sounds/en/s.mp3"),
+    t: require("../assets/alphabet_sounds/en/t.mp3"),
+    u: require("../assets/alphabet_sounds/en/u.mp3"),
+    v: require("../assets/alphabet_sounds/en/v.mp3"),
+    w: require("../assets/alphabet_sounds/en/w.mp3"),
+    x: require("../assets/alphabet_sounds/en/x.mp3"),
+    y: require("../assets/alphabet_sounds/en/y.mp3"),
+    z: require("../assets/alphabet_sounds/en/z.mp3"),
+  },
+};
