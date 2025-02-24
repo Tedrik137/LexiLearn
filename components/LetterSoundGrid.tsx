@@ -1,81 +1,106 @@
-import { StyleSheet, TouchableHighlight } from "react-native";
+import { Animated, Easing, StyleSheet } from "react-native";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { IconSymbol } from "./ui/IconSymbol";
-import LetterSound from "./LetterSound";
-import { Audio } from "expo-av";
-import { useEffect, useState } from "react";
-import { soundFiles } from "@/constants/soundFiles";
+import LetterSoundButton from "./LetterSoundButton";
 import { LanguageCode } from "@/types/soundTypes"; // Import the LanguageCode type
+import { playSound } from "@/utils/audioUtils";
+import { Pressable } from "react-native";
+import { useState } from "react";
 
 interface Props {
   letters: string[];
-  language: LanguageCode; // Enforce that `language` is one of the valid keys
+  language: LanguageCode;
 }
 
 export default function LetterSoundGrid({ letters, language }: Props) {
-  const [sound, setSound] = useState<Audio.Sound>();
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
 
-  async function playSound(letter: string) {
-    if (!soundFiles[language] || !soundFiles[language][letter]) {
-      console.error(
-        `Sound file for letter ${letter} not found in language ${language}`
-      );
-      return;
+  const handleSelect = (letter: string) => {
+    playSound(letter, language);
+    setSelectedLetter(letter);
+  };
+
+  const handleSubmit = (letter: string) => {
+    if (selectedLetter === letter) {
+      console.log("Right letter");
+    } else {
+      console.log("Wrong letter");
     }
-
-    if (sound) {
-      await sound.unloadAsync();
-      setSound(undefined);
-    }
-
-    console.log(`Loading Sound for ${letter} in ${language}`);
-
-    let loadedSound: Audio.Sound;
-    try {
-      const result = await Audio.Sound.createAsync(
-        soundFiles[language][letter]
-      );
-      loadedSound = result.sound; // Assign sound after awaiting
-    } catch (error) {
-      console.error("Error loading sound: ", error);
-      return;
-    }
-
-    setSound(loadedSound);
-
-    console.log("Playing Sound");
-    await loadedSound.playAsync();
-  }
-
-  useEffect(() => {
-    return sound
-      ? () => {
-          console.log("Unloading Sound");
-          sound.unloadAsync();
-        }
-      : undefined;
-  }, [sound]);
+  };
 
   return (
-    <ThemedView style={[styles.container]}>
-      {letters.map((letter) => (
-        <LetterSound
-          key={letter}
-          letter={letter}
-          playSound={() => playSound(letter)}
-        />
-      ))}
+    <ThemedView style={[styles.column]}>
+      <ThemedView style={[styles.container]}>
+        {letters.map((letter) => (
+          <LetterSoundButton
+            key={letter}
+            onPress={() => handleSelect(letter)}
+            size={45}
+            selected={selectedLetter === letter}
+          >
+            <ThemedText style={styles.buttonText}>{letter}</ThemedText>
+            <IconSymbol size={20} name="speaker.3" color="white" />
+          </LetterSoundButton>
+        ))}
+      </ThemedView>
+
+      <ThemedText style={[styles.text, { marginBottom: 15 }]}>
+        Which sound is this?
+      </ThemedText>
+      <LetterSoundButton
+        onPress={() => playSound("a", language)}
+        size={80}
+        selected={false}
+      >
+        <IconSymbol size={20} name="speaker.3" color="white" />
+      </LetterSoundButton>
+      <Pressable
+        style={[
+          styles.pressable,
+          { opacity: selectedLetter === null ? 0.5 : 1 },
+          selectedLetter !== null && {
+            borderWidth: 2,
+            borderColor: "blue", // Add a color to the border
+          },
+        ]}
+        disabled={selectedLetter === null}
+        onPress={() => handleSubmit("a")}
+      >
+        <ThemedText>
+          {selectedLetter ? `Submit ${selectedLetter}.` : "Pick a letter"}
+        </ThemedText>
+      </Pressable>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
     justifyContent: "space-evenly",
+    marginBottom: 80,
+  },
+  column: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  buttonText: {
+    fontWeight: "bold",
+    color: "white",
+    fontSize: 20,
+  },
+  text: {
+    color: "black",
+    fontSize: 16,
+  },
+  pressable: {
+    backgroundColor: "lightgreen",
+    borderRadius: 10,
+    marginTop: 15,
+    padding: 10,
   },
 });
