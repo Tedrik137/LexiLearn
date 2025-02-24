@@ -4,7 +4,6 @@ import CustomScrollView from "@/components/CustomScrollView";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { Link } from "expo-router";
-import LetterSound from "@/components/LetterSound";
 import LetterSoundGrid from "@/components/LetterSoundGrid";
 
 export default function HomeScreen() {
