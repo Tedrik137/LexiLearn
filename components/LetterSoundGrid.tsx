@@ -1,4 +1,4 @@
-import { Animated, Easing, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { IconSymbol } from "./ui/IconSymbol";
