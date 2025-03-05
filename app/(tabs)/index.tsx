@@ -41,7 +41,7 @@ export default function HomeScreen() {
             "y",
             "z",
           ]}
-          language="en"
+          language="en-au"
         />
       </ThemedView>
     </CustomScrollView>
