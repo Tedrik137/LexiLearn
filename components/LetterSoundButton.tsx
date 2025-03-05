@@ -19,7 +19,7 @@ export default function LetterSoundButton({
   const handlePressIn = () => {
     Animated.timing(scaleValue, {
       toValue: 1.2,
-      duration: 100,
+      duration: 200,
       useNativeDriver: true,
     }).start();
 
@@ -29,7 +29,7 @@ export default function LetterSoundButton({
   const handlePressOut = () => {
     Animated.timing(scaleValue, {
       toValue: 1,
-      duration: 100,
+      duration: 200,
       useNativeDriver: true,
     }).start();
   };
