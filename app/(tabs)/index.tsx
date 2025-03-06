@@ -13,7 +13,10 @@ export default function HomeScreen() {
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
       <ThemedView style={styles.titleContainer}>
-        <PictureQuiz />
+        <LetterSoundGrid
+          letters={["n", "m", "l", "k", "j", "i"]}
+          language="en-au"
+        ></LetterSoundGrid>
       </ThemedView>
     </CustomScrollView>
   );

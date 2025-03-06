@@ -20,7 +20,9 @@ export async function playSound(text: string, language: string) {
   }
 
   // Check if the file is already cached
-  const cachedFilePath = `${CACHE_FOLDER}${text}-${language}.mp3`;
+  const fileName = `${encodeURIComponent(text)}-${language}.mp3`;
+  const cachedFilePath = `${CACHE_FOLDER}${fileName}`;
+
   const fileInfo = await FileSystem.getInfoAsync(cachedFilePath);
 
   if (fileInfo.exists) {
@@ -32,22 +34,34 @@ export async function playSound(text: string, language: string) {
   await FileSystem.makeDirectoryAsync(CACHE_FOLDER, { intermediates: true });
 
   try {
-    const ttsResponse = await fetch("/api/tts", {
+    // Check Firebase storage first, then fallback to Google TTS API
+    const checkFirebaseResponse = await fetch("/api/tts", {
       method: "POST",
-      body: JSON.stringify({ text: text, language: language }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fileName: fileName,
+        text: text,
+        language: language,
+      }),
     });
 
-    const { encodedMP3 } = await ttsResponse.json();
+    const { success, encodedMP3, source } = await checkFirebaseResponse.json();
 
-    // Save Base64 MP3 to a file
-    await FileSystem.writeAsStringAsync(cachedFilePath, encodedMP3, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    if (success) {
+      // Save Base64 MP3 to a file
+      await FileSystem.writeAsStringAsync(cachedFilePath, encodedMP3, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
 
-    // Ensure this is still the latest request
-    if (requestId === currentRequestId) {
-      console.log(`Playing new audio for "${text}"`);
-      return playAudio(cachedFilePath, requestId);
+      // Ensure this is still the latest request
+      if (requestId === currentRequestId) {
+        console.log(`Playing ${source} audio for "${text}"`);
+        return playAudio(cachedFilePath, requestId);
+      }
+    } else {
+      console.error("Failed to get audio:", source);
     }
   } catch (error) {
     console.error(error);
@@ -61,12 +75,4 @@ async function playAudio(filePath: string, requestId: number) {
   const { sound } = await Audio.Sound.createAsync({ uri: filePath });
   currentSound = sound;
   await sound.playAsync();
-}
-
-// Cleanup function
-export async function unloadCurrentSound() {
-  if (currentSound) {
-    await currentSound.unloadAsync();
-    currentSound = undefined;
-  }
 }
