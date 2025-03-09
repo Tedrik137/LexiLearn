@@ -1,5 +1,6 @@
-import React, { useState, useRef } from "react";
-import { StyleSheet, View, Button } from "react-native";
+// QuizProgressBar.tsx
+import React, { useEffect, useRef } from "react";
+import { StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -7,17 +8,28 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import ConfettiCannon from "react-native-confetti-cannon";
+import { ThemedText } from "./ThemedText";
 
 interface Props {
   maxSteps: number;
+  currentStep: number;
 }
 
-const QuizProgressBar = ({ maxSteps }: Props) => {
-  const [, setProgress] = useState(0);
-  const progressValue = useSharedValue(0); // Reanimated SharedValue
+const QuizProgressBar = ({ maxSteps, currentStep }: Props) => {
+  const progressValue = useSharedValue(0);
   const confettiRef = useRef<ConfettiCannon | null>(null);
 
-  // Automatically update animation when progressValue changes
+  // Update the progress value when currentStep changes
+  useEffect(() => {
+    progressValue.value = currentStep;
+
+    // Trigger confetti when quiz is completed
+    if (currentStep === maxSteps && confettiRef.current) {
+      confettiRef.current.start();
+    }
+  }, [currentStep, maxSteps, progressValue]);
+
+  // Animated width calculation
   const progressBarWidth = useDerivedValue(() => {
     return withTiming((progressValue.value / maxSteps) * 200, {
       duration: 300,
@@ -29,51 +41,50 @@ const QuizProgressBar = ({ maxSteps }: Props) => {
     width: progressBarWidth.value,
   }));
 
-  const handlePress = () => {
-    setProgress((prev) => {
-      const newProgress = prev + 1;
-      progressValue.value = newProgress; // Reanimated updates automatically
-
-      if (newProgress === maxSteps && confettiRef.current) {
-        confettiRef.current.start();
-      }
-      return newProgress;
-    });
-  };
-
   return (
-    <View>
+    <View style={styles.progressContainer}>
       <ConfettiCannon
-        count={200} // More confetti for visibility
-        origin={{ x: 100, y: -200 }} // Adjusted origin for better placement
-        explosionSpeed={200} // Slower explosion for better effect
-        fallSpeed={600} // Slower fall for longer visibility
+        count={200}
+        origin={{ x: 100, y: -200 }}
+        explosionSpeed={200}
+        fallSpeed={600}
         fadeOut={true}
-        colors={["blue", "red", "yellow"]} // More colors for a lively effect
+        colors={["blue", "red", "yellow"]}
         autoStart={false}
-        ref={confettiRef} // Store ref
+        ref={confettiRef}
       />
       <View style={styles.outerContainer}>
         <Animated.View
           style={[styles.innerContainer, progressBarAnimationStyle]}
         />
       </View>
-      <Button onPress={handlePress} title="Click Me" />
+      <ThemedText style={styles.progressText}>
+        Question {Math.min(currentStep + 1, maxSteps)} of {maxSteps}
+      </ThemedText>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  progressContainer: {
+    alignItems: "center",
+    marginVertical: 15,
+  },
   outerContainer: {
     backgroundColor: "#e8ebed",
     height: 10,
     borderRadius: 4,
     width: 200,
+    marginBottom: 5,
   },
   innerContainer: {
     backgroundColor: "blue",
     height: 10,
     borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    marginTop: 5,
   },
 });
 
