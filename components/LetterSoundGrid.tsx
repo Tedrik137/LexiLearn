@@ -7,6 +7,7 @@ import { LanguageCode } from "@/types/soundTypes"; // Import the LanguageCode ty
 import { playSound } from "@/utils/audioUtils";
 import { Pressable } from "react-native";
 import { useState } from "react";
+import QuizProgressBar from "./QuizProgressBar";
 
 interface Props {
   letters: string[];
@@ -31,6 +32,7 @@ export default function LetterSoundGrid({ letters, language }: Props) {
 
   return (
     <ThemedView style={[styles.column]}>
+      <QuizProgressBar maxSteps={5} />
       <ThemedView style={[styles.container]}>
         {letters.map((letter) => (
           <LetterSoundButton
