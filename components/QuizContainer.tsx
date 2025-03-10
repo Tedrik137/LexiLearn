@@ -28,6 +28,7 @@ export default function QuizContainer({
   const [quizMode, setQuizMode] = useState<QuizMode>("practice");
   const [showFeedback, setShowFeedback] = useState<boolean>(false);
   const [lastAnswerCorrect, setLastAnswerCorrect] = useState<boolean>(false);
+  const [quiz, setQuiz] = useState<number[]>([]);
 
   // Reset or initialize the quiz
   useEffect(() => {
@@ -36,11 +37,17 @@ export default function QuizContainer({
 
   // Select a random letter from the available letters
   const selectRandomLetter = () => {
-    if (letters.length > 0) {
-      const randomIndex = Math.floor(Math.random() * letters.length);
-      return letters[randomIndex];
-    }
-    return "a"; // Fallback
+    if (letters.length > 0) return Math.floor(Math.random() * letters.length);
+    return 0;
+  };
+
+  const createNewQuiz = () => {
+    const targetLetters = new Array(maxQuestions)
+      .fill(null)
+      .map(selectRandomLetter);
+
+    setQuiz(targetLetters);
+    return targetLetters;
   };
 
   // Handler for when user submits an answer
@@ -74,7 +81,7 @@ export default function QuizContainer({
     if (nextQuestionNumber >= maxQuestions) {
       setQuizCompleted(true);
     } else {
-      setCurrentTargetLetter(selectRandomLetter());
+      setCurrentTargetLetter(letters[quiz[nextQuestionNumber]]);
     }
   };
 
@@ -83,7 +90,8 @@ export default function QuizContainer({
     setScore(0);
     setQuizCompleted(false);
     setShowFeedback(false);
-    setCurrentTargetLetter(selectRandomLetter());
+    const newLetters = createNewQuiz();
+    setCurrentTargetLetter(letters[newLetters[0]]);
   };
 
   const toggleQuizMode = () => {
@@ -120,9 +128,10 @@ export default function QuizContainer({
             language={language}
             targetLetter={currentTargetLetter}
             onAnswerSubmit={handleAnswerSubmit}
-            canPlayLetterSounds={quizMode === "practice"}
+            quizMode={quizMode}
             showFeedback={showFeedback}
             isLastAnswerCorrect={lastAnswerCorrect}
+            currentQuestion={currentQuestion}
           />
 
           {quizMode === "practice" && (

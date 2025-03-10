@@ -14,9 +14,10 @@ interface Props {
   language: LanguageCode;
   targetLetter: string;
   onAnswerSubmit: (selectedLetter: string) => void;
-  canPlayLetterSounds: boolean;
   showFeedback: boolean;
   isLastAnswerCorrect: boolean;
+  currentQuestion: number;
+  quizMode: string;
 }
 
 export default function LetterSoundGrid({
@@ -24,26 +25,24 @@ export default function LetterSoundGrid({
   language,
   targetLetter,
   onAnswerSubmit,
-  canPlayLetterSounds,
   showFeedback,
   isLastAnswerCorrect,
+  currentQuestion,
+  quizMode,
 }: Props) {
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+  const canPlayLetterSounds = quizMode === "practice";
 
-  // Play target letter sound when it changes (new question)
   useEffect(() => {
+    setSelectedLetter(null);
+
     // Short delay to ensure the interface has updated
     const timer = setTimeout(() => {
       playSound(targetLetter, language);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [targetLetter, language]);
-
-  // Reset selected letter when target letter changes
-  useEffect(() => {
-    setSelectedLetter(null);
-  }, [targetLetter]);
+  }, [currentQuestion, quizMode]);
 
   const handleSelect = (letter: string) => {
     // Only play the sound in practice mode
@@ -60,7 +59,6 @@ export default function LetterSoundGrid({
 
   return (
     <ThemedView style={styles.column}>
-      {/* Feedback message in practice mode */}
       {showFeedback && (
         <ThemedView
           style={[
@@ -127,7 +125,7 @@ export default function LetterSoundGrid({
         onPress={handleSubmit}
       >
         <ThemedText style={styles.submitButtonText}>
-          {selectedLetter ? `Submit ${selectedLetter}` : "Pick a letter"}
+          {selectedLetter ? `Submit  "${selectedLetter}"` : "Pick a letter"}
         </ThemedText>
       </Pressable>
     </ThemedView>
