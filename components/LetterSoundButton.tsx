@@ -6,6 +6,7 @@ interface Props {
   children: React.ReactNode;
   size?: number;
   selected: boolean;
+  disabled: boolean;
 }
 
 export default function LetterSoundButton({
@@ -13,6 +14,7 @@ export default function LetterSoundButton({
   children,
   size = 40,
   selected,
+  disabled,
 }: Props) {
   const [scaleValue] = useState(new Animated.Value(1));
 
@@ -35,7 +37,11 @@ export default function LetterSoundButton({
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+    >
       <Animated.View
         style={[
           styles.button,
@@ -48,6 +54,7 @@ export default function LetterSoundButton({
                 borderStyle: "solid",
               }
             : { backgroundColor: "#3F51B5" },
+          disabled && { backgroundColor: "#8d9efc" },
         ]}
       >
         {children}
