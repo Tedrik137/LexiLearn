@@ -35,13 +35,6 @@ export default function LetterSoundGrid({
 
   useEffect(() => {
     setSelectedLetter(null);
-
-    // Short delay to ensure the interface has updated
-    const timer = setTimeout(() => {
-      playSound(targetLetter, language);
-    }, 500);
-
-    return () => clearTimeout(timer);
   }, [currentQuestion, quizMode]);
 
   const handleSelect = (letter: string) => {
