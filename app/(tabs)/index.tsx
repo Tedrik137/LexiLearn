@@ -6,6 +6,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { Link } from "expo-router";
 import LetterSoundGrid from "@/components/LetterSoundGrid";
 import QuizContainer from "@/components/QuizContainer";
+import PictureQuiz from "@/components/PictureQuiz";
 
 export default function HomeScreen() {
   return (
@@ -13,11 +14,7 @@ export default function HomeScreen() {
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
       <ThemedView style={styles.titleContainer}>
-        <QuizContainer
-          language="en-au"
-          letters={["a", "b", "c", "d", "e", "f", "g", "h"]}
-          maxQuestions={5}
-        />
+        <PictureQuiz language="en-au" maxQuestions={5} />
       </ThemedView>
     </CustomScrollView>
   );

@@ -157,6 +157,10 @@ export default function QuizContainer({
 
   return (
     <ThemedView style={styles.container}>
+      <QuizProgressBar
+        maxSteps={maxQuestions}
+        currentStep={quiz.currentQuestion}
+      />
       <ThemedView style={styles.modeToggleContainer}>
         <Pressable
           style={[
@@ -177,11 +181,19 @@ export default function QuizContainer({
           <ThemedText style={styles.modeButtonText}>Test Mode</ThemedText>
         </Pressable>
       </ThemedView>
+      {quiz.quizMode === "practice" && (
+        <ThemedText style={styles.modeDescription}>
+          Practice Mode: Learn the letter sounds by playing each one. Feedback
+          will be shown after each answer.
+        </ThemedText>
+      )}
 
-      <QuizProgressBar
-        maxSteps={maxQuestions}
-        currentStep={quiz.currentQuestion}
-      />
+      {quiz.quizMode === "test" && (
+        <ThemedText style={styles.modeDescription}>
+          Test Mode: Test your knowledge! You can only hear the target sound,
+          not individual letters.
+        </ThemedText>
+      )}
 
       {!quiz.quizCompleted ? (
         <>
@@ -195,20 +207,6 @@ export default function QuizContainer({
             isLastAnswerCorrect={quiz.lastAnswerCorrect}
             currentQuestion={quiz.currentQuestion}
           />
-
-          {quiz.quizMode === "practice" && (
-            <ThemedText style={styles.modeDescription}>
-              Practice Mode: Learn the letter sounds by playing each one.
-              Feedback will be shown after each answer.
-            </ThemedText>
-          )}
-
-          {quiz.quizMode === "test" && (
-            <ThemedText style={styles.modeDescription}>
-              Test Mode: Test your knowledge! You can only hear the target
-              sound, not individual letters.
-            </ThemedText>
-          )}
         </>
       ) : (
         <ThemedView style={styles.resultContainer}>
@@ -271,6 +269,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     paddingHorizontal: 20,
+    marginBottom: 30,
   },
   resultContainer: {
     alignItems: "center",
