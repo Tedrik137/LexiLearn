@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { View, StyleSheet, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
+import { View, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { Image, ImageLoadEventData } from "expo-image";
 import Animated, {
   useSharedValue,
   withTiming,
@@ -8,13 +8,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { ThemedText } from "./ThemedText";
 import PictureButtonGrid from "./PictureButtonGrid";
-
-// QuizContainer.tsx
 import { ThemedView } from "./ThemedView";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
 import { LanguageCode } from "@/types/soundTypes";
-import { playSound } from "@/utils/audioUtils";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 
 interface Props {
@@ -32,6 +29,9 @@ type Quiz = {
   quizWordPictures: [string, any][];
 };
 
+const screenWidth = Dimensions.get("window").width;
+const MAX_IMAGE_HEIGHT = 250;
+
 export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
@@ -46,20 +46,33 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   const [currentTarget, setCurrentTarget] = useState<[string, any]>(
     wordPictureTypes[0]
   );
-  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Initialize the quiz when component mounts
-  useEffect(() => {
-    setupQuiz();
-  }, [wordPictureTypes]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
+
+  // Add a state to track the image dimensions
+  const [imageDimensions, setImageDimensions] = useState({
+    width: screenWidth * 0.9, // Default width to 90% of screen
+    height: MAX_IMAGE_HEIGHT, // Default height to a reasonable value
+  });
 
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
 
   useEffect(() => {
     opacity.value = withTiming(1, { duration: 1250 }); // Fade-in over 1.5s
     scale.value = withTiming(1, { duration: 750 }); // Scale-in over 1s
   }, [quiz.currentQuestion]);
+
+  // Initialize the quiz when component mounts
+  useEffect(() => {
+    setupQuiz();
+  }, [wordPictureTypes]);
 
   // Select a random letter from the available letters
   const selectRandomTarget = () => {
@@ -120,10 +133,9 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     } else {
       const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
       setCurrentTarget(nextTarget);
-
-      // Play the sound for the next question
-      playSound(nextTarget[0], language);
     }
+    setImageDimensions({ width: screenWidth * 0.9, height: MAX_IMAGE_HEIGHT });
+    setIsImageLoaded(false);
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
@@ -145,9 +157,6 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
 
       setCurrentTarget(newPictureWords[0]);
       setIsLoading(false);
-
-      // Play the sound after the quiz is set up
-      playSound(newPictureWords[0][0], language);
     }, delay);
   };
 
@@ -156,13 +165,27 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   };
 
   const toggleQuizMode = () => {
+    setIsImageLoaded(false);
+    setImageDimensions({ width: screenWidth * 0.9, height: MAX_IMAGE_HEIGHT });
     setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
-  }));
+  const onImageLoad = (event: ImageLoadEventData) => {
+    const { width, height } = event.source;
+    const aspectRatio = width / height;
+
+    const containerWidth = screenWidth * 0.9; // 90% of screen width
+    let newWidth = containerWidth;
+    let newHeight = containerWidth / aspectRatio;
+
+    if (newHeight > MAX_IMAGE_HEIGHT) {
+      newHeight = MAX_IMAGE_HEIGHT;
+      newWidth = newHeight * aspectRatio;
+    }
+
+    console.log(`New image dimensions: ${newWidth} x ${newHeight}`);
+    setImageDimensions({ width: newWidth, height: newHeight });
+  };
 
   if (isLoading) {
     return (
@@ -205,25 +228,54 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       </ThemedView>
       {quiz.quizMode === "practice" && (
         <ThemedText style={styles.modeDescription}>
-          Practice Mode: Learn the letter sounds by playing each one. Feedback
-          will be shown after each answer.
+          Practice Mode: Learn the picture-word pairs by playing each button.
+          Feedback will be shown after each answer.
         </ThemedText>
       )}
 
       {quiz.quizMode === "test" && (
         <ThemedText style={styles.modeDescription}>
-          Test Mode: Test your knowledge! You can only hear the target sound,
-          not individual letters.
+          Test Mode: Test your knowledge! You won't receive feedback till the
+          end.
         </ThemedText>
       )}
       {!quiz.quizCompleted ? (
         <>
+          {!isImageLoaded && (
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <ThemedText style={styles.loadingText}>
+                Loading image...
+              </ThemedText>
+            </View>
+          )}
           <View style={styles.container}>
-            <Animated.View style={[styles.imageWrapper, animatedStyle]}>
+            <Animated.View
+              style={[
+                styles.imageWrapper,
+                animatedStyle,
+                {
+                  width: imageDimensions.width || screenWidth * 0.9,
+                  height: imageDimensions.height || MAX_IMAGE_HEIGHT,
+                },
+              ]}
+            >
               <Image
-                style={styles.image}
+                style={{
+                  width: imageDimensions.width || screenWidth * 0.9,
+                  height: imageDimensions.height || MAX_IMAGE_HEIGHT,
+                  opacity: isImageLoaded ? 1 : 0, // Hide the image until loaded, but keep it in the DOM
+                }}
                 source={currentTarget[1]}
-                contentFit="cover"
+                onLoad={(event) => {
+                  console.log("Image Loaded: ", event.source);
+                  onImageLoad(event);
+                  setIsImageLoaded(true);
+                }}
+                onError={(error) => {
+                  console.error("Image failed to load:", error);
+                  setIsImageLoaded(true); // Still mark as "loaded" to remove spinner on error
+                }}
               />
             </Animated.View>
             <ThemedText>Match the word with the image:</ThemedText>
@@ -266,13 +318,9 @@ const styles = StyleSheet.create({
   imageWrapper: {
     overflow: "hidden",
     alignSelf: "center",
-    width: "100%",
+    alignItems: "center",
     borderRadius: 16, // Optional rounded edges
     marginBottom: 20,
-  },
-  image: {
-    width: "100%",
-    height: 300,
   },
   loadingContainer: {
     flex: 1,
@@ -341,5 +389,22 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  imageContainer: {
+    position: "relative",
+    width: screenWidth * 0.9,
+    height: MAX_IMAGE_HEIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
   },
 });

@@ -5,7 +5,8 @@ import { LanguageCode } from "@/types/soundTypes";
 import { ThemedView } from "./ThemedView";
 import { Pressable, StyleSheet } from "react-native";
 import { ThemedText } from "./ThemedText";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { wordPictureTypes } from "@/entities/wordPictureTypes";
 
 interface Props {
   language: LanguageCode;
@@ -17,6 +18,49 @@ interface Props {
   isLastAnswerCorrect: boolean;
 }
 
+/**
+ * Generate an array of word options that includes the target word and random distractors
+ */
+const getRandomWords = (
+  correctWord: string,
+  totalOptions: number = 4
+): string[] => {
+  // Filter out the current target word
+  const otherWords = wordPictureTypes
+    .filter(([word]) => word !== correctWord)
+    .map(([word]) => word);
+
+  // If we don't have enough words in our list, add some fallback words
+  const fallbackWords = [
+    "cat",
+    "dog",
+    "sun",
+    "bird",
+    "plane",
+    "house",
+    "tree",
+    "car",
+    "book",
+    "pen",
+  ];
+  const allOptions =
+    otherWords.length >= totalOptions - 1
+      ? otherWords
+      : [...otherWords, ...fallbackWords];
+
+  // Ensure uniqueness in the options
+  const uniqueOptions = Array.from(new Set(allOptions));
+
+  // Shuffle the array and take the first (totalOptions - 1) elements
+  const shuffled = [...uniqueOptions].sort(() => 0.5 - Math.random());
+  const selectedWords = shuffled.slice(0, totalOptions - 1);
+
+  // Add the correct word and shuffle again
+  const options = [...selectedWords, correctWord];
+
+  return options.sort(() => 0.5 - Math.random());
+};
+
 const PictureButtonGrid = ({
   language,
   currentTarget,
@@ -27,14 +71,20 @@ const PictureButtonGrid = ({
   isLastAnswerCorrect,
 }: Props) => {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-  const words = [currentTarget, "sun", "bird", "plane"];
 
+  // Generate word options - using useMemo for performance
+  const words = useMemo(
+    () => getRandomWords(currentTarget, 4),
+    [currentTarget, currentQuestion, quizMode]
+  );
+
+  // Reset selection when question changes
   useEffect(() => {
     setSelectedWord(null);
   }, [currentQuestion, quizMode]);
 
   const handleSelect = (word: string) => {
-    // Only play the sound in practice mode
+    // Play the sound when selected
     playSound(word, language);
     setSelectedWord(word);
   };
@@ -66,7 +116,7 @@ const PictureButtonGrid = ({
         <LetterSoundButton
           onPress={() => handleSelect(words[0])}
           size={90}
-          selected={false}
+          selected={selectedWord === words[0]}
           disabled={showFeedback}
         >
           <ThemedText style={styles.buttonText}>{words[0]}</ThemedText>
@@ -75,7 +125,7 @@ const PictureButtonGrid = ({
         <LetterSoundButton
           onPress={() => handleSelect(words[1])}
           size={90}
-          selected={false}
+          selected={selectedWord === words[1]}
           disabled={showFeedback}
         >
           <ThemedText style={styles.buttonText}>{words[1]}</ThemedText>
@@ -86,7 +136,7 @@ const PictureButtonGrid = ({
         <LetterSoundButton
           onPress={() => handleSelect(words[2])}
           size={90}
-          selected={false}
+          selected={selectedWord === words[2]}
           disabled={showFeedback}
         >
           <ThemedText style={styles.buttonText}>{words[2]}</ThemedText>
@@ -95,7 +145,7 @@ const PictureButtonGrid = ({
         <LetterSoundButton
           onPress={() => handleSelect(words[3])}
           size={90}
-          selected={false}
+          selected={selectedWord === words[3]}
           disabled={showFeedback}
         >
           <ThemedText style={styles.buttonText}>{words[3]}</ThemedText>
@@ -116,7 +166,7 @@ const PictureButtonGrid = ({
         onPress={handleSubmit}
       >
         <ThemedText style={styles.submitButtonText}>
-          {selectedWord ? `Submit  "${selectedWord}"` : "Pick a word"}
+          {selectedWord ? `Submit "${selectedWord}"` : "Pick a word"}
         </ThemedText>
       </Pressable>
     </ThemedView>
