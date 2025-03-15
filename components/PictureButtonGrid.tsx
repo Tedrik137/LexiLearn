@@ -19,7 +19,8 @@ interface Props {
 }
 
 /**
- * Generate an array of word options that includes the target word and random distractors
+ * Generate an array of word options that includes the target word
+ * and random distractors
  */
 const getRandomWords = (
   correctWord: string,
@@ -31,7 +32,7 @@ const getRandomWords = (
     .map(([word]) => word);
 
   // If we don't have enough words in our list, add some fallback words
-  const fallbackWords = [
+  let fallbackWords = [
     "cat",
     "dog",
     "sun",
@@ -43,6 +44,9 @@ const getRandomWords = (
     "book",
     "pen",
   ];
+
+  fallbackWords = fallbackWords.filter((word) => word != correctWord);
+
   const allOptions =
     otherWords.length >= totalOptions - 1
       ? otherWords
