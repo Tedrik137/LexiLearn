@@ -82,7 +82,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       // Move to next question after a delay
       setTimeout(() => {
         moveToNextQuestion();
-      }, 1000); // 2-second delay to show feedback
+      }, 1000); // 1-second delay to show feedback
     } else {
       // In test mode, immediately move to the next question
       moveToNextQuestion();
@@ -95,9 +95,16 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         quizCompleted: true,
+        currentQuestion: nextQuestionNumber,
+        showFeedback: false,
       }));
     } else {
       const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
+
+      setQuiz((prevQuiz) => ({
+        ...prevQuiz,
+        showFeedback: false,
+      }));
 
       // Wait until the image starts loading before moving forward
       setIsImageLoading(true);
@@ -107,7 +114,6 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         setQuiz((prevQuiz) => ({
           ...prevQuiz,
           currentQuestion: nextQuestionNumber,
-          showFeedback: false,
         }));
         setIsImageLoading(false);
       }, 100); // Delay ensures the transition looks smooth
@@ -194,26 +200,25 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
           end.
         </ThemedText>
       )}
+
       {!quiz.quizCompleted ? (
-        <>
-          <View style={styles.container}>
-            <PictureQuizImage
-              isImageLoading={isImageLoading}
-              currentTarget={currentTarget[1]}
-              currentQuestion={quiz.currentQuestion}
-            />
-            <ThemedText>Match the word with the image:</ThemedText>
-            <PictureButtonGrid
-              language={language}
-              quizMode={quiz.quizMode}
-              currentQuestion={quiz.currentQuestion}
-              currentTarget={currentTarget[0]}
-              onAnswerSubmit={handleAnswerSubmit}
-              showFeedback={quiz.showFeedback}
-              isLastAnswerCorrect={quiz.lastAnswerCorrect}
-            />
-          </View>
-        </>
+        <View style={styles.container}>
+          <PictureQuizImage
+            isImageLoading={isImageLoading}
+            currentTarget={currentTarget[1]}
+            currentQuestion={quiz.currentQuestion}
+          />
+          <ThemedText>Match the word with the image:</ThemedText>
+          <PictureButtonGrid
+            language={language}
+            quizMode={quiz.quizMode}
+            currentQuestion={quiz.currentQuestion}
+            currentTarget={currentTarget[0]}
+            onAnswerSubmit={handleAnswerSubmit}
+            showFeedback={quiz.showFeedback}
+            isLastAnswerCorrect={quiz.lastAnswerCorrect}
+          />
+        </View>
       ) : (
         <ThemedView style={styles.resultContainer}>
           <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>

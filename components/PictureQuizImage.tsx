@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Dimensions, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  useWindowDimensions,
+  ActivityIndicator,
+} from "react-native";
 import { Image } from "expo-image";
 import Animated, {
   useAnimatedStyle,
@@ -42,7 +46,8 @@ export default function PictureQuizImage({
   }, [currentTarget, currentQuestion]);
 
   // Screen width
-  const screenWidth = Dimensions.get("window").width * 0.9;
+  const screenWidth = useWindowDimensions().width * 0.9;
+
   const maxHeight = 250;
 
   if (isImageLoading) {

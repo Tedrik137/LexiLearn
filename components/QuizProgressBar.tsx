@@ -1,5 +1,4 @@
-// QuizProgressBar.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -7,7 +6,6 @@ import Animated, {
   useDerivedValue,
   withTiming,
 } from "react-native-reanimated";
-import ConfettiCannon from "react-native-confetti-cannon";
 import { ThemedText } from "./ThemedText";
 
 interface Props {
@@ -15,19 +13,13 @@ interface Props {
   currentStep: number;
 }
 
-const QuizProgressBar = ({ maxSteps, currentStep }: Props) => {
+export default function QuizProgressBar({ maxSteps, currentStep }: Props) {
   const progressValue = useSharedValue(0);
-  const confettiRef = useRef<ConfettiCannon | null>(null);
 
   // Update the progress value when currentStep changes
   useEffect(() => {
     progressValue.value = currentStep;
-
-    // Trigger confetti when quiz is completed
-    if (currentStep === maxSteps && confettiRef.current) {
-      confettiRef.current.start();
-    }
-  }, [currentStep, maxSteps, progressValue]);
+  }, [currentStep, maxSteps]);
 
   // Animated width calculation
   const progressBarWidth = useDerivedValue(() => {
@@ -43,16 +35,6 @@ const QuizProgressBar = ({ maxSteps, currentStep }: Props) => {
 
   return (
     <View style={styles.progressContainer}>
-      <ConfettiCannon
-        count={200}
-        origin={{ x: 100, y: -200 }}
-        explosionSpeed={200}
-        fallSpeed={600}
-        fadeOut={true}
-        colors={["blue", "red", "yellow"]}
-        autoStart={false}
-        ref={confettiRef}
-      />
       <View style={styles.outerContainer}>
         <Animated.View
           style={[styles.innerContainer, progressBarAnimationStyle]}
@@ -63,7 +45,7 @@ const QuizProgressBar = ({ maxSteps, currentStep }: Props) => {
       </ThemedText>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   progressContainer: {
@@ -87,5 +69,3 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 });
-
-export default QuizProgressBar;
