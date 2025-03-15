@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
-import { Image, ImageLoadEventData } from "expo-image";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { ThemedText } from "./ThemedText";
 import PictureButtonGrid from "./PictureButtonGrid";
 import { ThemedView } from "./ThemedView";
@@ -39,6 +38,8 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     wordPictureTypes[0]
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
 
   // Initialize the quiz when component mounts
   useEffect(() => {
@@ -81,7 +82,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       // Move to next question after a delay
       setTimeout(() => {
         moveToNextQuestion();
-      }, 2000); // 2-second delay to show feedback
+      }, 1000); // 2-second delay to show feedback
     } else {
       // In test mode, immediately move to the next question
       moveToNextQuestion();
@@ -90,12 +91,6 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
 
   const moveToNextQuestion = () => {
     const nextQuestionNumber = quiz.currentQuestion + 1;
-    setQuiz((prevQuiz) => ({
-      ...prevQuiz,
-      currentQuestion: nextQuestionNumber,
-      showFeedback: false,
-    }));
-
     if (nextQuestionNumber >= maxQuestions) {
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
@@ -103,12 +98,25 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       }));
     } else {
       const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
+
+      // Wait until the image starts loading before moving forward
+      setIsImageLoading(true);
       setCurrentTarget(nextTarget);
+
+      setTimeout(() => {
+        setQuiz((prevQuiz) => ({
+          ...prevQuiz,
+          currentQuestion: nextQuestionNumber,
+          showFeedback: false,
+        }));
+        setIsImageLoading(false);
+      }, 100); // Delay ensures the transition looks smooth
     }
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
     setIsLoading(true);
+    setIsImageLoading(true);
 
     setTimeout(() => {
       const newPictureWords = createNewQuiz();
@@ -126,11 +134,8 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
 
       setCurrentTarget(newPictureWords[0]);
       setIsLoading(false);
+      setIsImageLoading(false);
     }, delay);
-  };
-
-  const resetQuiz = () => {
-    setupQuiz();
   };
 
   const toggleQuizMode = () => {
@@ -193,8 +198,9 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         <>
           <View style={styles.container}>
             <PictureQuizImage
-              currentQuestion={quiz.currentQuestion}
+              isImageLoading={isImageLoading}
               currentTarget={currentTarget[1]}
+              currentQuestion={quiz.currentQuestion}
             />
             <ThemedText>Match the word with the image:</ThemedText>
             <PictureButtonGrid
@@ -217,7 +223,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
           <ThemedText style={styles.resultScore}>
             Your score: {quiz.score} out of {maxQuestions}
           </ThemedText>
-          <Pressable style={styles.resetButton} onPress={resetQuiz}>
+          <Pressable style={styles.resetButton} onPress={() => setupQuiz()}>
             <ThemedText style={styles.resetButtonText}>Try Again</ThemedText>
           </Pressable>
         </ThemedView>
