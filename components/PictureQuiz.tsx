@@ -8,6 +8,7 @@ import QuizProgressBar from "./QuizProgressBar";
 import { LanguageCode } from "@/types/soundTypes";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
+import Confetti from "./Confetti";
 
 interface Props {
   language: LanguageCode;
@@ -167,60 +168,66 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         maxSteps={maxQuestions}
         currentStep={quiz.currentQuestion}
       />
-      <ThemedView style={styles.modeToggleContainer}>
-        <Pressable
-          style={[
-            styles.modeButton,
-            quiz.quizMode === "practice" && styles.activeMode,
-          ]}
-          onPress={() => quiz.quizMode !== "practice" && toggleQuizMode()}
-        >
-          <ThemedText style={styles.modeButtonText}>Practice Mode</ThemedText>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.modeButton,
-            quiz.quizMode === "test" && styles.activeMode,
-          ]}
-          onPress={() => quiz.quizMode !== "test" && toggleQuizMode()}
-        >
-          <ThemedText style={styles.modeButtonText}>Test Mode</ThemedText>
-        </Pressable>
-      </ThemedView>
-      {quiz.quizMode === "practice" && (
-        <ThemedText style={styles.modeDescription}>
-          Practice Mode: Learn the picture-word pairs by playing each button.
-          Feedback will be shown after each answer.
-        </ThemedText>
+      {!quiz.quizCompleted && (
+        <>
+          <ThemedView style={styles.modeToggleContainer}>
+            <Pressable
+              style={[
+                styles.modeButton,
+                quiz.quizMode === "practice" && styles.activeMode,
+              ]}
+              onPress={() => quiz.quizMode !== "practice" && toggleQuizMode()}
+            >
+              <ThemedText style={styles.modeButtonText}>
+                Practice Mode
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modeButton,
+                quiz.quizMode === "test" && styles.activeMode,
+              ]}
+              onPress={() => quiz.quizMode !== "test" && toggleQuizMode()}
+            >
+              <ThemedText style={styles.modeButtonText}>Test Mode</ThemedText>
+            </Pressable>
+          </ThemedView>
+          {quiz.quizMode === "practice" && (
+            <ThemedText style={styles.modeDescription}>
+              Practice Mode: Learn the picture-word pairs by playing each
+              button. Feedback will be shown after each answer.
+            </ThemedText>
+          )}
+
+          {quiz.quizMode === "test" && (
+            <ThemedText style={styles.modeDescription}>
+              Test Mode: Test your knowledge! You won't receive feedback till
+              the end.
+            </ThemedText>
+          )}
+          <View style={styles.container}>
+            <PictureQuizImage
+              isImageLoading={isImageLoading}
+              currentTarget={currentTarget[1]}
+              currentQuestion={quiz.currentQuestion}
+            />
+            <ThemedText>Match the word with the image:</ThemedText>
+            <PictureButtonGrid
+              language={language}
+              quizMode={quiz.quizMode}
+              currentQuestion={quiz.currentQuestion}
+              currentTarget={currentTarget[0]}
+              onAnswerSubmit={handleAnswerSubmit}
+              showFeedback={quiz.showFeedback}
+              isLastAnswerCorrect={quiz.lastAnswerCorrect}
+            />
+          </View>
+        </>
       )}
 
-      {quiz.quizMode === "test" && (
-        <ThemedText style={styles.modeDescription}>
-          Test Mode: Test your knowledge! You won't receive feedback till the
-          end.
-        </ThemedText>
-      )}
-
-      {!quiz.quizCompleted ? (
-        <View style={styles.container}>
-          <PictureQuizImage
-            isImageLoading={isImageLoading}
-            currentTarget={currentTarget[1]}
-            currentQuestion={quiz.currentQuestion}
-          />
-          <ThemedText>Match the word with the image:</ThemedText>
-          <PictureButtonGrid
-            language={language}
-            quizMode={quiz.quizMode}
-            currentQuestion={quiz.currentQuestion}
-            currentTarget={currentTarget[0]}
-            onAnswerSubmit={handleAnswerSubmit}
-            showFeedback={quiz.showFeedback}
-            isLastAnswerCorrect={quiz.lastAnswerCorrect}
-          />
-        </View>
-      ) : (
+      {quiz.quizCompleted && (
         <ThemedView style={styles.resultContainer}>
+          <Confetti />
           <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
           <ThemedText style={styles.resultMode}>
             Mode: {quiz.quizMode === "practice" ? "Practice" : "Test"}
