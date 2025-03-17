@@ -13,7 +13,7 @@ export default function HomeScreen() {
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
-      <PictureQuiz language="en-au" maxQuestions={1} />
+      <PictureQuiz language="en-au" maxQuestions={5} />
     </CustomScrollView>
   );
 }
