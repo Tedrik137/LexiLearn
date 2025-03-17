@@ -11,9 +11,14 @@ import { ThemedText } from "./ThemedText";
 interface Props {
   maxSteps: number;
   currentStep: number;
+  marginTop: number;
 }
 
-export default function QuizProgressBar({ maxSteps, currentStep }: Props) {
+export default function QuizProgressBar({
+  maxSteps,
+  currentStep,
+  marginTop,
+}: Props) {
   const progressValue = useSharedValue(0);
 
   // Update the progress value when currentStep changes
@@ -34,7 +39,7 @@ export default function QuizProgressBar({ maxSteps, currentStep }: Props) {
   }));
 
   return (
-    <View style={styles.progressContainer}>
+    <View style={[styles.progressContainer, { marginTop: marginTop }]}>
       <View style={styles.outerContainer}>
         <Animated.View
           style={[styles.innerContainer, progressBarAnimationStyle]}
@@ -50,7 +55,6 @@ export default function QuizProgressBar({ maxSteps, currentStep }: Props) {
 const styles = StyleSheet.create({
   progressContainer: {
     alignItems: "center",
-    marginVertical: 15,
   },
   outerContainer: {
     backgroundColor: "#e8ebed",
@@ -67,5 +71,6 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 14,
     marginTop: 5,
+    marginBottom: 5,
   },
 });

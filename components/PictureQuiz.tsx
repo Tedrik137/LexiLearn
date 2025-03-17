@@ -8,7 +8,7 @@ import QuizProgressBar from "./QuizProgressBar";
 import { LanguageCode } from "@/types/soundTypes";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
-import Confetti from "./Confetti";
+import QuizResults from "./QuizResults";
 
 interface Props {
   language: LanguageCode;
@@ -23,6 +23,7 @@ type Quiz = {
   showFeedback: boolean;
   lastAnswerCorrect: boolean;
   quizWordPictures: [string, any][];
+  answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
 export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
@@ -34,6 +35,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     showFeedback: false,
     lastAnswerCorrect: false,
     quizWordPictures: [wordPictureTypes[0]],
+    answers: [],
   });
   const [currentTarget, setCurrentTarget] = useState<[string, any]>(
     wordPictureTypes[0]
@@ -65,21 +67,23 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   const handleAnswerSubmit = (selected: string) => {
     // Check if the answer is correct
     const isCorrect = selected === currentTarget[0];
-    if (isCorrect) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        score: prevQuiz.score + 1,
-      }));
-    }
+
+    setQuiz((prevQuiz) => ({
+      ...prevQuiz,
+      score: isCorrect ? prevQuiz.score + 1 : prevQuiz.score,
+      lastAnswerCorrect: isCorrect,
+      showFeedback: prevQuiz.quizMode === "practice",
+      answers: [
+        ...prevQuiz.answers,
+        {
+          question: currentTarget[0],
+          userAnswer: selected,
+          correct: isCorrect,
+        },
+      ],
+    }));
 
     if (quiz.quizMode === "practice") {
-      // Show feedback in practice mode
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        lastAnswerCorrect: isCorrect,
-        showFeedback: true,
-      }));
-
       // Move to next question after a delay
       setTimeout(() => {
         moveToNextQuestion();
@@ -137,6 +141,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         lastAnswerCorrect: false,
         quizCompleted: false,
         quizWordPictures: newPictureWords,
+        answers: [],
       }));
 
       setCurrentTarget(newPictureWords[0]);
@@ -167,6 +172,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       <QuizProgressBar
         maxSteps={maxQuestions}
         currentStep={quiz.currentQuestion}
+        marginTop={10}
       />
       {!quiz.quizCompleted && (
         <>
@@ -206,40 +212,40 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
             </ThemedText>
           )}
           <View style={styles.container}>
-            <PictureQuizImage
-              isImageLoading={isImageLoading}
-              currentTarget={currentTarget[1]}
-              currentQuestion={quiz.currentQuestion}
-            />
-            <ThemedText>Match the word with the image:</ThemedText>
-            <PictureButtonGrid
-              language={language}
-              quizMode={quiz.quizMode}
-              currentQuestion={quiz.currentQuestion}
-              currentTarget={currentTarget[0]}
-              onAnswerSubmit={handleAnswerSubmit}
-              showFeedback={quiz.showFeedback}
-              isLastAnswerCorrect={quiz.lastAnswerCorrect}
-            />
+            {currentTarget && (
+              <>
+                <PictureQuizImage
+                  isImageLoading={isImageLoading}
+                  currentTarget={currentTarget[1]}
+                  currentQuestion={quiz.currentQuestion}
+                />
+                <ThemedText>Match the word with the image:</ThemedText>
+                <PictureButtonGrid
+                  language={language}
+                  quizMode={quiz.quizMode}
+                  currentQuestion={quiz.currentQuestion}
+                  currentTarget={currentTarget[0]}
+                  onAnswerSubmit={handleAnswerSubmit}
+                  showFeedback={quiz.showFeedback}
+                  isLastAnswerCorrect={quiz.lastAnswerCorrect}
+                />
+              </>
+            )}
           </View>
         </>
       )}
 
-      {quiz.quizCompleted && (
-        <ThemedView style={styles.resultContainer}>
-          <Confetti />
-          <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
-          <ThemedText style={styles.resultMode}>
-            Mode: {quiz.quizMode === "practice" ? "Practice" : "Test"}
-          </ThemedText>
-          <ThemedText style={styles.resultScore}>
-            Your score: {quiz.score} out of {maxQuestions}
-          </ThemedText>
-          <Pressable style={styles.resetButton} onPress={() => setupQuiz()}>
-            <ThemedText style={styles.resetButtonText}>Try Again</ThemedText>
-          </Pressable>
-        </ThemedView>
-      )}
+      {quiz.quizCompleted &&
+        quiz.quizWordPictures.length === quiz.answers.length && (
+          <QuizResults
+            setupQuiz={setupQuiz}
+            maxQuestions={maxQuestions}
+            quizMode={quiz.quizMode}
+            score={quiz.score}
+            quizWordPictures={quiz.quizWordPictures}
+            answers={quiz.answers}
+          />
+        )}
     </ThemedView>
   );
 }
