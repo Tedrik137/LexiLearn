@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { ThemedText } from "./ThemedText";
 import PictureButtonGrid from "./PictureButtonGrid";
@@ -9,6 +9,7 @@ import { LanguageCode } from "@/types/soundTypes";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
 import QuizResults from "./PictureQuizResults";
+import SelectableSentence from "./SelectableSentence";
 
 interface Props {
   language: LanguageCode;
@@ -22,11 +23,10 @@ type Quiz = {
   quizMode: string;
   showFeedback: boolean;
   lastAnswerCorrect: boolean;
-  quizWordPictures: [string, any][];
   answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
-export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
+export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
     score: 0,
@@ -34,34 +34,11 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     quizMode: "practice",
     showFeedback: false,
     lastAnswerCorrect: false,
-    quizWordPictures: [wordPictureTypes[0]],
     answers: [],
   });
-  const [currentTarget, setCurrentTarget] = useState<[string, any]>(
-    wordPictureTypes[0]
-  );
+  const [currentTarget, setCurrentTarget] = useState<string>("tree");
+  const [selectedWord, setSelectedWord] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
-
-  // Initialize the quiz when component mounts
-  useEffect(() => {
-    setupQuiz();
-  }, [wordPictureTypes]);
-
-  // select random word,image pair as current question
-  const selectRandomTarget = () => {
-    if (wordPictureTypes.length > 0)
-      return wordPictureTypes[
-        Math.floor(Math.random() * wordPictureTypes.length)
-      ];
-    return wordPictureTypes[0];
-  };
-
-  // make an array of size maxQuestions of random questions
-  const createNewQuiz = () => {
-    return new Array(maxQuestions).fill(null).map(selectRandomTarget);
-  };
 
   // Handler for when user submits an answer
   const handleAnswerSubmit = (selected: string) => {
@@ -104,15 +81,13 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         showFeedback: false,
       }));
     } else {
-      const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
+      const nextTarget = "next";
 
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         showFeedback: false,
       }));
 
-      // Wait until the image starts loading before moving forward
-      setIsImageLoading(true);
       setCurrentTarget(nextTarget);
 
       setTimeout(() => {
@@ -120,18 +95,14 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
           ...prevQuiz,
           currentQuestion: nextQuestionNumber,
         }));
-        setIsImageLoading(false);
       }, 100); // Delay ensures the transition looks smooth
     }
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
     setIsLoading(true);
-    setIsImageLoading(true);
 
     setTimeout(() => {
-      const newPictureWords = createNewQuiz();
-
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         quizMode: newMode ?? prevQuiz.quizMode,
@@ -140,13 +111,11 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         showFeedback: false,
         lastAnswerCorrect: false,
         quizCompleted: false,
-        quizWordPictures: newPictureWords,
         answers: [],
       }));
 
-      setCurrentTarget(newPictureWords[0]);
+      setCurrentTarget("first");
       setIsLoading(false);
-      setIsImageLoading(false);
     }, delay);
   };
 
@@ -200,8 +169,9 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
           </ThemedView>
           {quiz.quizMode === "practice" && (
             <ThemedText style={styles.modeDescription}>
-              Practice Mode: Learn the picture-word pairs by playing each
-              button. Feedback will be shown after each answer.
+              Tap the word in a sentence that matches an audio cue. Replay the
+              audio cue and sentence as many times as you want. Feedback will be
+              shown after each answer.
             </ThemedText>
           )}
 
@@ -214,38 +184,33 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
           <View style={styles.container}>
             {currentTarget && (
               <>
-                <PictureQuizImage
-                  isImageLoading={isImageLoading}
-                  currentTarget={currentTarget[1]}
-                  currentQuestion={quiz.currentQuestion}
-                />
-                <ThemedText>Match the word with the image:</ThemedText>
-                <PictureButtonGrid
-                  language={language}
-                  quizMode={quiz.quizMode}
-                  currentQuestion={quiz.currentQuestion}
-                  currentTarget={currentTarget[0]}
-                  onAnswerSubmit={handleAnswerSubmit}
-                  showFeedback={quiz.showFeedback}
-                  isLastAnswerCorrect={quiz.lastAnswerCorrect}
-                />
+                <ThemedText style={{ textAlign: "center" }}>
+                  Match the audio cue with the word in the sentence:
+                </ThemedText>
+                <SelectableSentence
+                  setSelectedWord={setSelectedWord}
+                  sentence="This is my beautiful long long long sentence!"
+                ></SelectableSentence>
               </>
             )}
           </View>
         </>
       )}
 
-      {quiz.quizCompleted &&
-        quiz.quizWordPictures.length === quiz.answers.length && (
-          <QuizResults
-            setupQuiz={setupQuiz}
-            maxQuestions={maxQuestions}
-            quizMode={quiz.quizMode}
-            score={quiz.score}
-            quizWordPictures={quiz.quizWordPictures}
-            answers={quiz.answers}
-          />
-        )}
+      {quiz.quizCompleted && quiz.answers.length && (
+        <ThemedView style={styles.resultContainer}>
+          <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
+          <ThemedText style={styles.resultMode}>
+            Mode: {quiz.quizMode === "practice" ? "Practice" : "Test"}
+          </ThemedText>
+          <ThemedText style={styles.resultScore}>
+            Your score: {quiz.score} out of {maxQuestions}
+          </ThemedText>
+          <Pressable style={styles.resetButton} onPress={() => setupQuiz()}>
+            <ThemedText style={styles.resetButtonText}>Try Again</ThemedText>
+          </Pressable>
+        </ThemedView>
+      )}
     </ThemedView>
   );
 }

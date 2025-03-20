@@ -7,13 +7,14 @@ import { Link } from "expo-router";
 import LetterSoundGrid from "@/components/LetterSoundGrid";
 import QuizContainer from "@/components/QuizContainer";
 import PictureQuiz from "@/components/PictureQuiz";
+import SpotTheWordQuiz from "@/components/SpotTheWordQuiz";
 
 export default function HomeScreen() {
   return (
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
-      <PictureQuiz language="en-au" maxQuestions={5} />
+      <SpotTheWordQuiz language="en-au" maxQuestions={5}></SpotTheWordQuiz>
     </CustomScrollView>
   );
 }

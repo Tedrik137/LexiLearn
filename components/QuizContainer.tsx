@@ -160,6 +160,7 @@ export default function QuizContainer({
       <QuizProgressBar
         maxSteps={maxQuestions}
         currentStep={quiz.currentQuestion}
+        marginTop={10}
       />
       <ThemedView style={styles.modeToggleContainer}>
         <Pressable
