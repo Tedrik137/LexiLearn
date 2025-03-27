@@ -4,6 +4,7 @@ import Animated, { useSharedValue } from "react-native-reanimated";
 import AnimatedWord from "./AnimatedWord";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
+import { useState } from "react";
 
 interface Props {
   sentence: string;
@@ -14,16 +15,45 @@ export default function SelectableSentence({
   sentence,
   setSelectedWord,
 }: Props) {
-  const sharedSelectedWord = useSharedValue<string>(""); // ⬅️ Shared value for immediate updates
+  // React state for selected word
+  const [selectedWordId, setSelectedWordId] = useState<string>("");
+
+  // Shared value for animation control
+  const lastAnimatedWord = useSharedValue<string>("");
+
+  // Handle word selection
+  const handleWordSelect = (word: string, uniqueId: string) => {
+    if (uniqueId === lastAnimatedWord.value) {
+      lastAnimatedWord.value = "";
+      setTimeout(() => {
+        lastAnimatedWord.value = uniqueId;
+      }, 50);
+    } else {
+      lastAnimatedWord.value = uniqueId;
+    }
+
+    // Update React state
+    setSelectedWordId(uniqueId);
+
+    // Call the parent's callback
+    setSelectedWord(word);
+  };
+
+  // Split the sentence once
+  const words = sentence.split(" ");
 
   return (
     <ThemedView style={styles.container}>
-      {sentence.split(" ").map((word, index) => (
+      {words.map((word, index) => (
         <AnimatedWord
           key={uuidv4()}
           word={word}
-          selectedWord={sharedSelectedWord}
-          setSelectedWord={setSelectedWord}
+          uniqueId={`${word}-${index}`} // Add unique identifier
+          onSelect={(selectedWord) =>
+            handleWordSelect(selectedWord, `${word}-${index}`)
+          }
+          lastAnimatedWord={lastAnimatedWord}
+          isSelected={`${word}-${index}` === selectedWordId}
         />
       ))}
     </ThemedView>

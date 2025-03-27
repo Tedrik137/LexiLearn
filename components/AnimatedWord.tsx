@@ -9,54 +9,93 @@ import Animated, {
   withRepeat,
   withSequence,
   SharedValue,
+  useAnimatedReaction,
+  cancelAnimation,
 } from "react-native-reanimated";
 
 interface Props {
   word: string;
-  selectedWord: SharedValue<string>; // ⬅️ Now using shared value
-  setSelectedWord: (word: string) => void;
+  uniqueId: string;
+  onSelect: (word: string) => void;
+  lastAnimatedWord: SharedValue<string>;
+  isSelected: boolean;
 }
 
-const ANGLE = 10;
-const TIME = 100;
+const ROTATION_TIME = 75;
+const BACKGROUND_TIME = 2500;
 const EASING = Easing.elastic(1.5);
 
 export default function AnimatedWord({
   word,
-  selectedWord,
-  setSelectedWord,
+  uniqueId,
+  onSelect,
+  lastAnimatedWord,
+  isSelected,
 }: Props) {
+  const ANGLE = word.length > 5 ? 3 : 5;
   const rotation = useSharedValue<number>(0);
+  const background = useSharedValue<string>("#66afff");
+  const scale = useSharedValue<number>(1.0);
 
+  // Animated style for rotation
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
+    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+    backgroundColor: background.value,
   }));
 
+  // React to changes in the lastAnimatedWord shared value
+  useAnimatedReaction(
+    () => lastAnimatedWord.value,
+    (currentAnimatedWord, previousAnimatedWord) => {
+      // If this is the word that was just selected
+      if (currentAnimatedWord === uniqueId) {
+        // Start the animation
+        rotation.value = withSequence(
+          withTiming(-ANGLE, { duration: ROTATION_TIME / 2, easing: EASING }),
+          withRepeat(
+            withTiming(ANGLE, { duration: ROTATION_TIME, easing: EASING }),
+            7,
+            true
+          ),
+          withTiming(0, { duration: ROTATION_TIME / 2, easing: EASING })
+        );
+
+        background.value = withTiming("lightgreen", {
+          duration: BACKGROUND_TIME,
+          easing: EASING,
+        });
+
+        scale.value = withTiming(1.1, {
+          duration: BACKGROUND_TIME,
+          easing: EASING,
+        });
+      }
+      // If this was the previously animated word, reset it
+      else if (previousAnimatedWord === uniqueId && rotation.value !== 0) {
+        cancelAnimation(rotation);
+        cancelAnimation(background);
+        rotation.value = withTiming(0, { duration: 50 });
+        background.value = withTiming("#66afff", { duration: 50 });
+        scale.value = withTiming(1.0, { duration: 50 });
+      }
+    }
+  );
+
+  // Handle press
   const handlePress = () => {
-    setSelectedWord(word); // ADDED THIS AND THE ANIMATIONS AREN'T PLAYTING CONSISTENTLY
-
-    selectedWord.value = word; // ⬅️ Updates instantly without delay
-
-    // Play animation immediately
-    rotation.value = withSequence(
-      withTiming(-ANGLE, { duration: TIME / 2, easing: EASING }),
-      withRepeat(
-        withTiming(ANGLE, { duration: TIME, easing: EASING }),
-        7,
-        true
-      ),
-      withTiming(0, { duration: TIME / 2, easing: EASING })
-    );
+    onSelect(word);
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <Animated.View style={[styles.box, animatedStyle]}>
-        <Pressable onPress={handlePress}>
+    <Pressable onPress={handlePress} style={[styles.pressableContainer]}>
+      <ThemedView style={styles.container}>
+        <Animated.View
+          style={[styles.box, animatedStyle, isSelected && styles.selected]}
+        >
           <ThemedText style={{ textAlign: "center" }}>{word}</ThemedText>
-        </Pressable>
-      </Animated.View>
-    </ThemedView>
+        </Animated.View>
+      </ThemedView>
+    </Pressable>
   );
 }
 
@@ -66,10 +105,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   box: {
-    backgroundColor: "#b58df1",
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
+    alignSelf: "flex-start",
+  },
+  selected: {
+    borderWidth: 1,
+    borderColor: "#1c1c1c",
+  },
+  pressableContainer: {
     alignSelf: "flex-start",
   },
 });
