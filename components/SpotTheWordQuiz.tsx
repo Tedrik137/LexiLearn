@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, ActivityIndicator } from "react-native";
 import { ThemedText } from "./ThemedText";
-import PictureButtonGrid from "./PictureButtonGrid";
 import { ThemedView } from "./ThemedView";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
 import { LanguageCode } from "@/types/soundTypes";
-import { wordPictureTypes } from "@/entities/wordPictureTypes";
-import PictureQuizImage from "./PictureQuizImage";
-import QuizResults from "./PictureQuizResults";
+
 import SelectableSentence from "./SelectableSentence";
+import LetterSoundButton from "./LetterSoundButton";
+import { playSound } from "@/utils/audioUtils";
+import { IconSymbol } from "./ui/IconSymbol";
+import { sentences } from "@/entities/sentences";
 
 interface Props {
   language: LanguageCode;
@@ -23,6 +24,7 @@ type Quiz = {
   quizMode: string;
   showFeedback: boolean;
   lastAnswerCorrect: boolean;
+  quizSentences: string[];
   answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
@@ -34,16 +36,22 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
     quizMode: "practice",
     showFeedback: false,
     lastAnswerCorrect: false,
+    quizSentences: ["This is my beautful long long long sentence."],
     answers: [],
   });
-  const [currentTarget, setCurrentTarget] = useState<string>("tree");
-  const [selectedWord, setSelectedWord] = useState<string>("");
+
+  // Initialize the quiz when component mounts
+  useEffect(() => {
+    setupQuiz();
+  }, [sentences]);
+
+  const [currentTarget, setCurrentTarget] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Handler for when user submits an answer
-  const handleAnswerSubmit = (selected: string) => {
+  const handleAnswerSubmit = (selectedWord: string) => {
     // Check if the answer is correct
-    const isCorrect = selected === currentTarget[0];
+    const isCorrect = selectedWord === currentTarget;
 
     setQuiz((prevQuiz) => ({
       ...prevQuiz,
@@ -53,8 +61,8 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
       answers: [
         ...prevQuiz.answers,
         {
-          question: currentTarget[0],
-          userAnswer: selected,
+          question: currentTarget,
+          userAnswer: selectedWord,
           correct: isCorrect,
         },
       ],
@@ -81,14 +89,12 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         showFeedback: false,
       }));
     } else {
-      const nextTarget = "next";
-
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         showFeedback: false,
       }));
 
-      setCurrentTarget(nextTarget);
+      selectRandomWord(quiz.quizSentences[nextQuestionNumber]);
 
       setTimeout(() => {
         setQuiz((prevQuiz) => ({
@@ -103,6 +109,8 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
     setIsLoading(true);
 
     setTimeout(() => {
+      const newSentences = createNewQuiz();
+
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         quizMode: newMode ?? prevQuiz.quizMode,
@@ -111,12 +119,31 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         showFeedback: false,
         lastAnswerCorrect: false,
         quizCompleted: false,
+        quizSentences: newSentences,
         answers: [],
       }));
 
-      setCurrentTarget("first");
+      selectRandomWord(newSentences[0]);
       setIsLoading(false);
     }, delay);
+  };
+
+  // select random sentence from sentences
+  const selectRandomSentence = () => {
+    if (sentences && sentences.length > 0)
+      return sentences[Math.floor(Math.random() * sentences.length)];
+    return "This is my beautiful long long long sentence.";
+  };
+
+  // make an array of size maxQuestions of random questions
+  const createNewQuiz = () => {
+    return new Array(maxQuestions).fill(null).map(selectRandomSentence);
+  };
+
+  const selectRandomWord = (sentence: string) => {
+    const words = sentence.split(" ");
+    const index = Math.floor(Math.random() * (words.length - 1));
+    setCurrentTarget(words[index]);
   };
 
   const toggleQuizMode = () => {
@@ -181,19 +208,21 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
               the end.
             </ThemedText>
           )}
-          <View style={styles.container}>
-            {currentTarget && (
-              <>
-                <ThemedText style={{ textAlign: "center" }}>
-                  Match the audio cue with the word in the sentence:
-                </ThemedText>
-                <SelectableSentence
-                  setSelectedWord={setSelectedWord}
-                  sentence="This is my beautiful long long long sentence!"
-                ></SelectableSentence>
-              </>
-            )}
-          </View>
+
+          {currentTarget && (
+            <ThemedView style={styles.container}>
+              <ThemedText style={{ textAlign: "center", marginTop: 50 }}>
+                Match the audio cue with the word in the sentence:
+              </ThemedText>
+              <SelectableSentence
+                sentence={quiz.quizSentences[quiz.currentQuestion].split(" ")}
+                handleAnswerSubmit={handleAnswerSubmit}
+                showFeedback={quiz.showFeedback}
+                quizMode={quiz.quizMode}
+                currentTarget={currentTarget}
+              />
+            </ThemedView>
+          )}
         </>
       )}
 

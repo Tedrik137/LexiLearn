@@ -55,7 +55,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       return wordPictureTypes[
         Math.floor(Math.random() * wordPictureTypes.length)
       ];
-    return wordPictureTypes[0];
+    return wordPictureTypes[0]; // change to stock picture and stock result
   };
 
   // make an array of size maxQuestions of random questions
@@ -211,27 +211,26 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
               the end.
             </ThemedText>
           )}
-          <View style={styles.container}>
-            {currentTarget && (
-              <>
-                <PictureQuizImage
-                  isImageLoading={isImageLoading}
-                  currentTarget={currentTarget[1]}
-                  currentQuestion={quiz.currentQuestion}
-                />
-                <ThemedText>Match the word with the image:</ThemedText>
-                <PictureButtonGrid
-                  language={language}
-                  quizMode={quiz.quizMode}
-                  currentQuestion={quiz.currentQuestion}
-                  currentTarget={currentTarget[0]}
-                  onAnswerSubmit={handleAnswerSubmit}
-                  showFeedback={quiz.showFeedback}
-                  isLastAnswerCorrect={quiz.lastAnswerCorrect}
-                />
-              </>
-            )}
-          </View>
+
+          {currentTarget && (
+            <ThemedView style={styles.container}>
+              <PictureQuizImage
+                isImageLoading={isImageLoading}
+                currentTarget={currentTarget[1]}
+                currentQuestion={quiz.currentQuestion}
+              />
+              <ThemedText>Match the word with the image:</ThemedText>
+              <PictureButtonGrid
+                language={language}
+                quizMode={quiz.quizMode}
+                currentQuestion={quiz.currentQuestion}
+                currentTarget={currentTarget[0]}
+                onAnswerSubmit={handleAnswerSubmit}
+                showFeedback={quiz.showFeedback}
+                isLastAnswerCorrect={quiz.lastAnswerCorrect}
+              />
+            </ThemedView>
+          )}
         </>
       )}
 
