@@ -8,13 +8,15 @@ import LetterSoundGrid from "@/components/LetterSoundGrid";
 import QuizContainer from "@/components/QuizContainer";
 import PictureQuiz from "@/components/PictureQuiz";
 import SpotTheWordQuiz from "@/components/SpotTheWordQuiz";
+import LoginForm from "@/components/LoginForm";
+import SignUpForm from "@/components/SignupForm";
 
 export default function HomeScreen() {
   return (
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
-      <SpotTheWordQuiz language="en-au" maxQuestions={5}></SpotTheWordQuiz>
+      <LoginForm />
     </CustomScrollView>
   );
 }

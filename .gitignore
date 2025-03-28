@@ -11,7 +11,8 @@ expo-env.d.ts
 
 .env
 
-firebaseConfig.js
+firebaseConfig.ts
+storage.rules
 
 # Native
 *.orig.*
