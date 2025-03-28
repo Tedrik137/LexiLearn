@@ -4,7 +4,6 @@ import Confetti from "./Confetti";
 import { ThemedText } from "./ThemedText";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { Image } from "expo-image";
-import CustomScrollView from "./CustomScrollView";
 
 interface Props {
   quizMode: string;
@@ -15,7 +14,7 @@ interface Props {
   setupQuiz: () => void;
 }
 
-export default function QuizResults({
+export default function PictureQuizResults({
   setupQuiz,
   quizMode,
   score,

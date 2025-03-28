@@ -89,18 +89,19 @@ export default function QuizContainer({
 
   const moveToNextQuestion = () => {
     const nextQuestionNumber = quiz.currentQuestion + 1;
-    setQuiz((prevQuiz) => ({
-      ...prevQuiz,
-      currentQuestion: nextQuestionNumber,
-      showFeedback: false,
-    }));
 
     if (nextQuestionNumber >= maxQuestions) {
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         quizCompleted: true,
+        showFeedback: false,
       }));
     } else {
+      setQuiz((prevQuiz) => ({
+        ...prevQuiz,
+        currentQuestion: nextQuestionNumber,
+        showFeedback: false,
+      }));
       const nextTargetLetter = quiz.quizLetters[nextQuestionNumber];
       setCurrentTargetLetter(nextTargetLetter);
 
@@ -160,6 +161,7 @@ export default function QuizContainer({
       <QuizProgressBar
         maxSteps={maxQuestions}
         currentStep={quiz.currentQuestion}
+        marginTop={10}
       />
       <ThemedView style={styles.modeToggleContainer}>
         <Pressable
