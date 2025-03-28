@@ -6,7 +6,7 @@ export const sentences: string[] = [
   "I feed my dog meat every day.",
   "My pet bird likes to fly around the neighbourhood.",
   "I have a big house.",
-  "My favorite car is a Honda Acura NSX.",
+  "My favorite car is a Honda Acura.",
   "My favorite food is pizza.",
   "I drink water when I am thirsty.",
   "Comedians make me laugh.",

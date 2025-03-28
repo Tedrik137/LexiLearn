@@ -19,6 +19,7 @@ interface Props {
   onSelect: (word: string) => void;
   lastAnimatedWord: SharedValue<string>;
   isSelected: boolean;
+  disabled: boolean;
 }
 
 const ROTATION_TIME = 75;
@@ -31,6 +32,7 @@ export default function AnimatedWord({
   onSelect,
   lastAnimatedWord,
   isSelected,
+  disabled,
 }: Props) {
   const ANGLE = word.length > 5 ? 3 : 5;
   const rotation = useSharedValue<number>(0);
@@ -87,7 +89,11 @@ export default function AnimatedWord({
   };
 
   return (
-    <Pressable onPress={handlePress} style={[styles.pressableContainer]}>
+    <Pressable
+      disabled={disabled}
+      onPress={handlePress}
+      style={[styles.pressableContainer]}
+    >
       <ThemedView style={styles.container}>
         <Animated.View
           style={[styles.box, animatedStyle, isSelected && styles.selected]}

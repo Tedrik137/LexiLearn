@@ -16,6 +16,7 @@ interface Props {
   handleAnswerSubmit: (selectedWord: string) => void;
   quizMode: string;
   currentTarget: string;
+  isQuestionTransitioning: boolean;
 }
 
 export default function SelectableSentence({
@@ -24,10 +25,10 @@ export default function SelectableSentence({
   handleAnswerSubmit,
   quizMode,
   currentTarget,
+  isQuestionTransitioning,
 }: Props) {
   // React state for selected word
   const [selectedWordId, setSelectedWordId] = useState<string>("");
-
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   // Shared value for animation control
@@ -35,6 +36,8 @@ export default function SelectableSentence({
 
   // Handle word selection
   const handleWordSelect = (word: string, uniqueId: string) => {
+    if (isQuestionTransitioning) return;
+
     if (uniqueId === lastAnimatedWord.value) {
       lastAnimatedWord.value = "";
       setTimeout(() => {
@@ -53,11 +56,14 @@ export default function SelectableSentence({
   };
 
   const handleSubmit = () => {
+    if (isQuestionTransitioning) return;
+
     if (selectedWord === null) return;
+
     lastAnimatedWord.value = "";
+    handleAnswerSubmit(selectedWord);
     setSelectedWord(null);
     setSelectedWordId("");
-    handleAnswerSubmit(selectedWord);
   };
 
   return (
@@ -73,6 +79,7 @@ export default function SelectableSentence({
             }
             lastAnimatedWord={lastAnimatedWord}
             isSelected={`${word}-${index}` === selectedWordId}
+            disabled={isQuestionTransitioning}
           />
         ))}
       </ThemedView>

@@ -14,7 +14,7 @@ interface Props {
   setupQuiz: () => void;
 }
 
-export default function QuizResults({
+export default function PictureQuizResults({
   setupQuiz,
   quizMode,
   score,

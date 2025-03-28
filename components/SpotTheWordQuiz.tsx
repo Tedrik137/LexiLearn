@@ -47,11 +47,16 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
 
   const [currentTarget, setCurrentTarget] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isQuestionTransitioning, setIsQuestionTransitioning] = useState(false);
 
   // Handler for when user submits an answer
   const handleAnswerSubmit = (selectedWord: string) => {
     // Check if the answer is correct
     const isCorrect = selectedWord === currentTarget;
+
+    if (isQuestionTransitioning) return;
+
+    setIsQuestionTransitioning(true);
 
     setQuiz((prevQuiz) => ({
       ...prevQuiz,
@@ -72,7 +77,7 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
       // Move to next question after a delay
       setTimeout(() => {
         moveToNextQuestion();
-      }, 1000); // 1-second delay to show feedback
+      }, 1500); // 1-second delay to show feedback
     } else {
       // In test mode, immediately move to the next question
       moveToNextQuestion();
@@ -88,20 +93,17 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         currentQuestion: nextQuestionNumber,
         showFeedback: false,
       }));
+
+      setIsQuestionTransitioning(false);
     } else {
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         showFeedback: false,
+        currentQuestion: nextQuestionNumber,
       }));
 
       selectRandomWord(quiz.quizSentences[nextQuestionNumber]);
-
-      setTimeout(() => {
-        setQuiz((prevQuiz) => ({
-          ...prevQuiz,
-          currentQuestion: nextQuestionNumber,
-        }));
-      }, 100); // Delay ensures the transition looks smooth
+      setIsQuestionTransitioning(false);
     }
   };
 
@@ -211,7 +213,23 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
 
           {currentTarget && (
             <ThemedView style={styles.container}>
-              <ThemedText style={{ textAlign: "center", marginTop: 50 }}>
+              {quiz.showFeedback && (
+                <ThemedView
+                  style={[
+                    styles.feedbackContainer,
+                    quiz.lastAnswerCorrect
+                      ? styles.correctFeedback
+                      : styles.incorrectFeedback,
+                  ]}
+                >
+                  <ThemedText style={styles.feedbackText}>
+                    {quiz.lastAnswerCorrect
+                      ? "Correct! Well done!"
+                      : `Incorrect. The correct answer was "${currentTarget}".`}
+                  </ThemedText>
+                </ThemedView>
+              )}
+              <ThemedText style={{ textAlign: "center", marginTop: 20 }}>
                 Match the audio cue with the word in the sentence:
               </ThemedText>
               <SelectableSentence
@@ -220,6 +238,7 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
                 showFeedback={quiz.showFeedback}
                 quizMode={quiz.quizMode}
                 currentTarget={currentTarget}
+                isQuestionTransitioning={isQuestionTransitioning}
               />
             </ThemedView>
           )}
@@ -318,5 +337,26 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  feedbackContainer: {
+    padding: 0.1,
+    borderRadius: 10,
+    width: "90%",
+    alignItems: "center",
+  },
+  correctFeedback: {
+    backgroundColor: "rgba(0, 200, 0, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 0, 0.5)",
+  },
+  incorrectFeedback: {
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 0, 0, 0.3)",
+  },
+  feedbackText: {
+    fontSize: 16,
+    textAlign: "center",
+    padding: 10,
   },
 });
