@@ -1,6 +1,8 @@
 import { Text, View, TextInput, Button, Alert } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { ThemedText } from "./ThemedText";
+import { useRouter } from "expo-router";
+import AuthService from "@/services/authService";
 
 type FormData = {
   email: string;
@@ -17,9 +19,21 @@ export default function SignUpForm() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
-    Alert.alert("Form Submitted", JSON.stringify(data));
+  const router = useRouter();
+
+  const onSubmit = async (data: FormData) => {
+    const user = await AuthService.signUp(
+      data.email,
+      data.password,
+      data.displayName
+    );
+
+    if (user.success) {
+      // redirect user to profile page
+      router.replace("/account");
+    } else {
+      // display error
+    }
   };
 
   const password = watch("password");
@@ -114,7 +128,7 @@ export default function SignUpForm() {
       {errors.confirmPassword && <Text>{errors.confirmPassword.message}</Text>}
 
       <Button
-        color="limegreen"
+        color="#328f32"
         title="Sign Up"
         onPress={handleSubmit(onSubmit)}
       />
