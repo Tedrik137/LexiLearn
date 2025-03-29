@@ -1,9 +1,5 @@
 import { StyleSheet } from "react-native";
 
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { ThemedText } from "@/components/ThemedText";
-import SignUpForm from "@/components/SignupForm";
-import LoginForm from "@/components/LoginForm";
 import CustomScrollView from "@/components/CustomScrollView";
 import ProfileGrid from "@/components/ProfileGrid";
 
