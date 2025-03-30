@@ -2,10 +2,13 @@ import { ThemedView } from "./ThemedView";
 import { Button, StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { useRouter, Link } from "expo-router";
-import { useAuth } from "@/hooks/useAuth";
+import { useShallow } from "zustand/react/shallow";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function ProfileGrid() {
-  const { user, initializing, signOut } = useAuth();
+  const { user, signOut } = useAuthStore(
+    useShallow((state) => ({ user: state.user, signOut: state.signOut }))
+  );
 
   const router = useRouter();
 

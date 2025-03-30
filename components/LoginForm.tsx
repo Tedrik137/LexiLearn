@@ -9,7 +9,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { ThemedText } from "./ThemedText";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
 
 type FormData = {
   email: string;
@@ -23,7 +23,7 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const { initializing, signIn } = useAuth();
+  const signIn = useAuthStore((state) => state.signIn);
 
   const onSubmit = async (data: FormData) => {
     const result = await signIn(data.email, data.password);
@@ -32,14 +32,6 @@ export default function LoginForm() {
       console.log(result.error);
     }
   };
-
-  if (initializing) {
-    return (
-      <View>
-        <ActivityIndicator></ActivityIndicator>
-      </View>
-    );
-  }
 
   return (
     <View>

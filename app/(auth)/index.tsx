@@ -6,7 +6,6 @@ import { ThemedText } from "@/components/ThemedText";
 import LoginForm from "@/components/LoginForm";
 import SignUpForm from "@/components/SignupForm";
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function AccountScreen() {
   const [authMode, setAuthMode] = useState("signUp");

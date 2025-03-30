@@ -2,11 +2,11 @@ import React from "react";
 import { IconSymbol } from "./ui/IconSymbol";
 import { ThemedView } from "./ThemedView";
 import { StyleSheet } from "react-native";
-import { useAuth } from "@/hooks/useAuth";
 import { ThemedText } from "./ThemedText";
+import { useAuthStore } from "@/stores/authStore";
 
 const Avatar = () => {
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
 
   return (
     <ThemedView style={styles.avatar}>

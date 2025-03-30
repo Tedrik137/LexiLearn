@@ -1,9 +1,10 @@
 import { Text, View, TextInput, Button, ActivityIndicator } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { ThemedText } from "./ThemedText";
-import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { useAuthStore } from "@/stores/authStore";
+import { useShallow } from "zustand/react/shallow";
 
 type FormData = {
   email: string;
@@ -20,7 +21,7 @@ export default function SignUpForm() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const { initializing, signUp } = useAuth();
+  const signUp = useAuthStore((state) => state.signUp);
 
   const onSubmit = async (data: FormData) => {
     const result = await signUp(data.email, data.password, data.displayName);
@@ -31,14 +32,6 @@ export default function SignUpForm() {
   };
 
   const password = watch("password");
-
-  if (initializing) {
-    return (
-      <View>
-        <ActivityIndicator></ActivityIndicator>
-      </View>
-    );
-  }
 
   return (
     <View>
