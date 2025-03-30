@@ -4,7 +4,6 @@ import { ThemedText } from "./ThemedText";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { useShallow } from "zustand/react/shallow";
 
 type FormData = {
   email: string;
