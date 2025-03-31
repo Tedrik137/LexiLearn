@@ -1,22 +1,20 @@
-import { Image, StyleSheet, Platform } from "react-native";
+import { Image, StyleSheet } from "react-native";
 
 import CustomScrollView from "@/components/CustomScrollView";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import { Link } from "expo-router";
-import LetterSoundGrid from "@/components/LetterSoundGrid";
-import QuizContainer from "@/components/QuizContainer";
-import PictureQuiz from "@/components/PictureQuiz";
-import SpotTheWordQuiz from "@/components/SpotTheWordQuiz";
-import LoginForm from "@/components/LoginForm";
-import SignUpForm from "@/components/SignupForm";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function HomeScreen() {
+  const user = useAuthStore((state) => state.user);
+
   return (
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
-      <LoginForm />
+      <ThemedView>
+        <ThemedText>Home Screen Content {user?.displayName}</ThemedText>
+      </ThemedView>
     </CustomScrollView>
   );
 }

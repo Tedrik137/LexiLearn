@@ -75,16 +75,25 @@ async function runEmulator() {
 
   const selectedEmulatorIndex = await getUserInput("\nEmulator: ");
 
+  const flags = await getUserInput("\nFlags: ");
+
+  console.log(selectedEmulatorIndex);
+  console.log(flags);
+
   if (isValidIndex(selectedEmulatorIndex, emulators.length)) {
     const selectedEmulator = emulators[selectedEmulatorIndex - 1];
     console.log(green(`\nStarting ${selectedEmulator}...`));
 
     try {
       // Use an array for the command and its arguments
-      const emulatorProcess = spawn(RUN_CMD, ["-avd", selectedEmulator], {
-        stdio: "inherit",
-        shell: true, // Use shell to handle path with spaces properly
-      });
+      const emulatorProcess = spawn(
+        RUN_CMD,
+        ["-avd", selectedEmulator, flags],
+        {
+          stdio: "inherit",
+          shell: true, // Use shell to handle path with spaces properly
+        }
+      );
 
       emulatorProcess.on("close", (code) => {
         if (code !== 0) {

@@ -1,25 +1,28 @@
-[debug] [2025-03-28T12:03:45.544Z] ----------------------------------------------------------------------
-[debug] [2025-03-28T12:03:45.549Z] Command:       /usr/local/bin/firebase /home/devricky/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase emulators:start
-[debug] [2025-03-28T12:03:45.549Z] CLI Version:   14.0.0
-[debug] [2025-03-28T12:03:45.549Z] Platform:      linux
-[debug] [2025-03-28T12:03:45.550Z] Node Version:  v20.18.2
-[debug] [2025-03-28T12:03:45.550Z] Time:          Fri Mar 28 2025 23:03:45 GMT+1100 (Australian Eastern Daylight Time)
-[debug] [2025-03-28T12:03:45.550Z] ----------------------------------------------------------------------
+[debug] [2025-03-30T12:25:34.638Z] ----------------------------------------------------------------------
+[debug] [2025-03-30T12:25:34.639Z] Command:       /usr/local/bin/firebase /home/devricky/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase emulators:start
+[debug] [2025-03-30T12:25:34.639Z] CLI Version:   14.0.0
+[debug] [2025-03-30T12:25:34.639Z] Platform:      linux
+[debug] [2025-03-30T12:25:34.639Z] Node Version:  v20.18.2
+[debug] [2025-03-30T12:25:34.640Z] Time:          Sun Mar 30 2025 23:25:34 GMT+1100 (Australian Eastern Daylight Time)
+[debug] [2025-03-30T12:25:34.640Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-03-28T12:03:45.720Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-03-28T12:03:45.720Z] > authorizing via signed-in user (4vitzal@gmail.com)
-[debug] [2025-03-28T12:03:45.808Z] openjdk version "17.0.14" 2025-01-21
+[debug] [2025-03-30T12:25:34.641Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-03-30T12:25:34.781Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-03-30T12:25:34.781Z] > authorizing via signed-in user (4vitzal@gmail.com)
+[debug] [2025-03-30T12:25:34.859Z] openjdk version "17.0.14" 2025-01-21
 
-[debug] [2025-03-28T12:03:45.809Z] OpenJDK Runtime Environment (build 17.0.14+7-Ubuntu-122.04.1)
+[debug] [2025-03-30T12:25:34.860Z] OpenJDK Runtime Environment (build 17.0.14+7-Ubuntu-122.04.1)
 OpenJDK 64-Bit Server VM (build 17.0.14+7-Ubuntu-122.04.1, mixed mode, sharing)
 
-[debug] [2025-03-28T12:03:45.814Z] Parsed Java major version: 17
+[debug] [2025-03-30T12:25:34.865Z] Parsed Java major version: 17
 [info] i  emulators: Starting emulators: auth, storage {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth, storage"}}
-[debug] [2025-03-28T12:03:45.817Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}],"storage":[{"address":"127.0.0.1","family":"IPv4","port":9199}]},"metadata":{"message":"assigned listening specs for emulators"}}
-[debug] [2025-03-28T12:03:45.820Z] [hub] writing locator at /tmp/hub-lexilearn-452708.json
-[debug] [2025-03-28T12:03:50.920Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"storage"},"message":"Ignoring unsupported arg: port"}}
-[debug] [2025-03-28T12:03:51.511Z] Temp file directory for storage emulator: /tmp/firebase/storage/blobs {"metadata":{"emulator":{"name":"storage"},"message":"Temp file directory for storage emulator: /tmp/firebase/storage/blobs"}}
-[debug] [2025-03-28T12:03:51.518Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: connect ECONNREFUSED 127.0.0.1:40001. If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[debug] [2025-03-30T12:25:34.868Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}],"storage":[{"address":"127.0.0.1","family":"IPv4","port":9199}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-03-30T12:25:34.871Z] [hub] writing locator at /tmp/hub-lexilearn-452708.json
+[debug] [2025-03-30T12:25:44.657Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"storage"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-03-30T12:25:38.832Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-03-30T12:25:38.832Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-03-30T12:25:39.185Z] Temp file directory for storage emulator: /tmp/firebase/storage/blobs {"metadata":{"emulator":{"name":"storage"},"message":"Temp file directory for storage emulator: /tmp/firebase/storage/blobs"}}
+[debug] [2025-03-30T12:25:39.192Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: connect ECONNREFUSED 127.0.0.1:40001. If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
 [info] 
 ┌─────────────────────────────────────────────────────────────┐
 │ ✔  All emulators ready! It is now safe to connect your app. │

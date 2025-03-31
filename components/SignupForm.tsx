@@ -1,8 +1,9 @@
-import { Text, View, TextInput, Button, Alert } from "react-native";
+import { Text, View, TextInput, Button, ActivityIndicator } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { ThemedText } from "./ThemedText";
 import { useRouter } from "expo-router";
-import AuthService from "@/services/authService";
+import { useEffect } from "react";
+import { useAuthStore } from "@/stores/authStore";
 
 type FormData = {
   email: string;
@@ -19,20 +20,13 @@ export default function SignUpForm() {
     formState: { errors },
   } = useForm<FormData>();
 
-  const router = useRouter();
+  const signUp = useAuthStore((state) => state.signUp);
 
   const onSubmit = async (data: FormData) => {
-    const user = await AuthService.signUp(
-      data.email,
-      data.password,
-      data.displayName
-    );
+    const result = await signUp(data.email, data.password, data.displayName);
 
-    if (user.success) {
-      // redirect user to profile page
-      router.replace("/account");
-    } else {
-      // display error
+    if (!result.success) {
+      console.log(result.error);
     }
   };
 

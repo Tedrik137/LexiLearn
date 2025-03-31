@@ -1,16 +1,27 @@
 import { ThemedView } from "./ThemedView";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { Button, StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { useRouter, Link } from "expo-router";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function ProfileGrid() {
+  const user = useAuthStore((state) => state.user);
+  const signOut = useAuthStore((state) => state.signOut);
+
   const router = useRouter();
 
   const handlePress = (route: Parameters<typeof router.push>[0]) => {
-    // Add a slight delay before navigation
-    setTimeout(() => {
-      router.push(route);
-    }, 150); // Adjust the delay time as needed
+    router.push(route);
+  };
+
+  const handleSignOut = async () => {
+    const result = await signOut();
+    if (result.success) {
+      // handle successfull sign out
+      console.log("Signed Out");
+    } else {
+      console.error(result.error);
+    }
   };
 
   return (
@@ -39,6 +50,8 @@ export default function ProfileGrid() {
       >
         <ThemedText style={[styles.text]}>Placeholder</ThemedText>
       </TouchableOpacity>
+      <ThemedText>Welcome {user?.displayName}</ThemedText>
+      <Button title="Sign Out" onPress={handleSignOut} />
     </ThemedView>
   );
 }

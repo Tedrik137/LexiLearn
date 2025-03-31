@@ -32,9 +32,13 @@ class AuthService {
         displayName: displayName,
       });
 
+      await userCredential.user.reload();
+
+      const updatedUser = auth.currentUser;
+
       return {
         success: true,
-        user: userCredential.user,
+        user: updatedUser,
       };
     } catch (error) {
       if (error instanceof FirebaseError) {

@@ -4,16 +4,19 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-
+import { ActivityIndicator, View } from "react-native";
+import { useAuthStore } from "@/stores/authStore";
+import { useShallow } from "zustand/react/shallow";
+import AuthObserver from "@/components/AuthObserver";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -23,24 +26,42 @@ export default function RootLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
+  // Get auth state and initialization function from Zustand store
+  const { initializing, initializeAuthListener } = useAuthStore(
+    useShallow((state) => ({
+      initializing: state.initializing,
+      initializeAuthListener: state.initializeAuthListener,
+    }))
+  );
+
+  // Initialize auth listener
+  useEffect(() => {
+    const unsubscribe = initializeAuthListener();
+    return () => unsubscribe();
+  }, [initializeAuthListener]);
+
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
+  // Show loading indicator while fonts are loading or auth is initializing
+  if (!loaded || initializing) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
-        <GestureHandlerRootView>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <AuthObserver>
+            <Slot />
+          </AuthObserver>
           <StatusBar style="auto" />
         </GestureHandlerRootView>
       </SafeAreaProvider>
