@@ -28,10 +28,17 @@ export default function AuthObserver({
 
       // Try to refresh the user data to get the display name
       if (auth.currentUser) {
-        auth.currentUser.reload().then(() => {
-          setUser(auth.currentUser);
-          setProfileComplete(true);
-        });
+        auth.currentUser
+          .reload()
+          .then(() => {
+            if (auth.currentUser?.displayName) {
+              setUser(auth.currentUser);
+              setProfileComplete(true);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to reload user: ", error);
+          });
       }
       return;
     }
