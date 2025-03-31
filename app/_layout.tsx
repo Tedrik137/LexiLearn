@@ -4,7 +4,7 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack, Redirect } from "expo-router";
+import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -15,7 +15,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ActivityIndicator, View } from "react-native";
 import { useAuthStore } from "@/stores/authStore";
-
+import { useShallow } from "zustand/react/shallow";
+import AuthObserver from "@/components/AuthObserver";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -26,7 +27,12 @@ export default function RootLayout() {
   });
 
   // Get auth state and initialization function from Zustand store
-  const { user, initializing, initializeAuthListener } = useAuthStore();
+  const { initializing, initializeAuthListener } = useAuthStore(
+    useShallow((state) => ({
+      initializing: state.initializing,
+      initializeAuthListener: state.initializeAuthListener,
+    }))
+  );
 
   // Initialize auth listener
   useEffect(() => {
@@ -53,24 +59,9 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }}>
-            {/* Auth group - shown only when user is not authenticated */}
-            <Stack.Screen
-              name="(auth)"
-              options={{ headerShown: false }}
-              redirect={user ? true : undefined}
-            />
-
-            {/* App group - shown only when user is authenticated */}
-            <Stack.Screen
-              name="(main)"
-              options={{ headerShown: false }}
-              redirect={user ? undefined : true}
-            />
-
-            {/* Index route - redirects based on auth state */}
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-          </Stack>
+          <AuthObserver>
+            <Slot />
+          </AuthObserver>
           <StatusBar style="auto" />
         </GestureHandlerRootView>
       </SafeAreaProvider>

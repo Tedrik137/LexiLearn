@@ -7,7 +7,7 @@ import LoginForm from "@/components/LoginForm";
 import SignUpForm from "@/components/SignupForm";
 import { useState } from "react";
 
-export default function AccountScreen() {
+export default function AuthScreen() {
   const [authMode, setAuthMode] = useState("signUp");
 
   const toggleAuthMode = () => {
