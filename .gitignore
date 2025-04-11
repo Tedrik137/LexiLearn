@@ -14,6 +14,7 @@ expo-env.d.ts
 firebaseConfig.ts
 firebaseDebug.log
 storage.rules
+firebase-debug.log
 
 # Native
 *.orig.*
