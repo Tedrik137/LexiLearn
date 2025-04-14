@@ -34,6 +34,8 @@ export default function AuthObserver({
             if (auth.currentUser?.displayName) {
               setUser(auth.currentUser);
               setProfileComplete(true);
+            } else {
+              console.warn("User displayName is still missing after reload.");
             }
           })
           .catch((error) => {
@@ -44,14 +46,16 @@ export default function AuthObserver({
     }
 
     // Only proceed with navigation if profile is complete
-    if (!user && !inAuthGroup) {
+    if (user && profileComplete) {
+      if (!inMainGroup) {
+        // If user is signed in, profile is complete, and not on a main app page, redirect to main
+        router.replace("/(main)");
+      }
+    } else if (!user && !inAuthGroup) {
       // If user is not signed in and not on an auth page, redirect to auth
       router.replace("/(auth)");
-    } else if (user && !inMainGroup && profileComplete) {
-      // If user is signed in, profile is complete, and not on a main app page, redirect to main
-      router.replace("/(main)");
     }
-  }, [user, segments, router, profileComplete]);
+  }, [user, segments, router, profileComplete, user?.displayName]);
 
   return <>{children}</>;
 }

@@ -81,7 +81,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // Initialize the auth listener
   initializeAuthListener: () => {
     // Setup the auth state listener
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user && !user.displayName) {
+        try {
+          await user.reload();
+          user = auth.currentUser; // Update the user reference after reload
+        } catch (error) {
+          console.error("Failed to reload user profile: ", error);
+        }
+      }
       set({ user });
       if (get().initializing) set({ initializing: false });
     });

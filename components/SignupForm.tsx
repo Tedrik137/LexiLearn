@@ -1,9 +1,9 @@
-import { Text, View, TextInput, Button, ActivityIndicator } from "react-native";
-import { useForm, Controller } from "react-hook-form";
+import { Text, View, TextInput } from "react-native";
+import { useForm, Controller, set } from "react-hook-form";
 import { ThemedText } from "./ThemedText";
-import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
+import AnimatedSubmissionButton from "./AnimatedSubmissionButton";
 
 type FormData = {
   email: string;
@@ -21,13 +21,17 @@ export default function SignUpForm() {
   } = useForm<FormData>();
 
   const signUp = useAuthStore((state) => state.signUp);
+  const [signingUp, setSigningUp] = useState(false);
 
   const onSubmit = async (data: FormData) => {
+    setSigningUp(true);
     const result = await signUp(data.email, data.password, data.displayName);
 
     if (!result.success) {
       console.log(result.error);
+      // Reset form
     }
+    setSigningUp(false);
   };
 
   const password = watch("password");
@@ -38,7 +42,7 @@ export default function SignUpForm() {
       <Controller
         control={control}
         rules={{
-          required: true,
+          required: "Email is required",
           pattern: {
             value: /\S+@\S+\.\S+/,
             message: "Must be a valid email",
@@ -54,13 +58,13 @@ export default function SignUpForm() {
         )}
         name="email"
       />
-      {errors.email && <Text>{errors.email.message}</Text>}
+      {errors.email && <ThemedText>{errors.email.message}</ThemedText>}
 
       <ThemedText>Display Name</ThemedText>
       <Controller
         control={control}
         rules={{
-          required: true,
+          required: "Display name is required",
         }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
@@ -72,21 +76,23 @@ export default function SignUpForm() {
         )}
         name="displayName"
       />
-      {errors.displayName && <Text>{errors.displayName.message}</Text>}
+      {errors.displayName && (
+        <ThemedText>{errors.displayName.message}</ThemedText>
+      )}
 
       <ThemedText>Password</ThemedText>
       <Controller
         control={control}
         rules={{
+          required: "Password is required",
           minLength: {
             value: 8,
             message: "Password must be at least 8 characters long",
           },
-          required: true,
           pattern: {
             value: /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@!_%&*])/,
             message:
-              "Password must have at least one uppercase and lowercase letter, one number and any special character",
+              "Password must have at least one uppercase and lowercase letter, one number, and one special character",
           },
         }}
         render={({ field: { onChange, onBlur, value } }) => (
@@ -100,13 +106,14 @@ export default function SignUpForm() {
         )}
         name="password"
       />
-      {errors.password && <Text>{errors.password.message}</Text>}
+      {errors.password && <ThemedText>{errors.password.message}</ThemedText>}
 
       <ThemedText>Confirm Password</ThemedText>
       <Controller
         control={control}
         rules={{
-          validate: (value) => value == password || "Passwords do not match",
+          required: "Confirm password is required",
+          validate: (value) => value === password || "Passwords do not match",
         }}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
@@ -119,12 +126,17 @@ export default function SignUpForm() {
         )}
         name="confirmPassword"
       />
-      {errors.confirmPassword && <Text>{errors.confirmPassword.message}</Text>}
+      {errors.confirmPassword && (
+        <ThemedText>{errors.confirmPassword.message}</ThemedText>
+      )}
 
-      <Button
-        color="#328f32"
-        title="Sign Up"
+      <AnimatedSubmissionButton
         onPress={handleSubmit(onSubmit)}
+        isLoading={signingUp}
+        text="Sign Up"
+        loadingText="Signing Up..."
+        outerBackgroundColor="#328f32"
+        innerBackgroundColor="#186318"
       />
     </View>
   );

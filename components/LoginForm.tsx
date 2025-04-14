@@ -10,6 +10,8 @@ import { useForm, Controller } from "react-hook-form";
 import { ThemedText } from "./ThemedText";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";
+import AnimatedSubmissionButton from "./AnimatedSubmissionButton";
+import { useState } from "react";
 
 type FormData = {
   email: string;
@@ -23,14 +25,19 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm<FormData>();
 
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const signIn = useAuthStore((state) => state.signIn);
 
   const onSubmit = async (data: FormData) => {
+    setIsLoggingIn(true);
     const result = await signIn(data.email, data.password);
 
     if (!result.success) {
       console.log(result.error);
+      // reset the form
     }
+    setIsLoggingIn(false);
   };
 
   return (
@@ -85,7 +92,14 @@ export default function LoginForm() {
       />
       {errors.password && <Text>{errors.password.message}</Text>}
 
-      <Button color="#3F51B5" title="Login" onPress={handleSubmit(onSubmit)} />
+      <AnimatedSubmissionButton
+        onPress={handleSubmit(onSubmit)}
+        isLoading={isLoggingIn}
+        loadingText="Logging In..."
+        text="Login"
+        outerBackgroundColor="#005dfc"
+        innerBackgroundColor="#0045bd"
+      />
     </View>
   );
 }
