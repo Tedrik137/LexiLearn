@@ -46,7 +46,7 @@ export default function LoginForm() {
       <Controller
         control={control}
         rules={{
-          required: true,
+          required: "Email is required",
           pattern: {
             value: /\S+@\S+\.\S+/,
             message: "Must be a valid email",
@@ -72,7 +72,7 @@ export default function LoginForm() {
             value: 8,
             message: "Password must be at least 8 characters long",
           },
-          required: true,
+          required: "Password is required",
           pattern: {
             value: /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@!_%&*])/,
             message:
