@@ -15,10 +15,6 @@ export default function AuthObserver({
   const [profileComplete, setProfileComplete] = useState(true);
 
   useEffect(() => {
-    // Skip redirection if still initializing
-    const initializing = useAuthStore.getState().initializing;
-    if (initializing) return;
-
     const inAuthGroup = segments[0] === "(auth)";
     const inMainGroup = segments[0] === "(main)";
 

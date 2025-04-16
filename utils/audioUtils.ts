@@ -1,10 +1,12 @@
+import { useAuthStore } from "@/stores/authStore";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 
 let currentSound: Audio.Sound | undefined = undefined;
 let currentRequestId: number = 0; // Track latest request
-
 const CACHE_FOLDER = `${FileSystem.cacheDirectory}tts/`; // Store TTS files
+
+const user = useAuthStore((state) => state.user);
 
 export async function playSound(text: string, language: string) {
   if (!text || !language) return;
@@ -39,6 +41,7 @@ export async function playSound(text: string, language: string) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${user?.getIdToken()}`,
       },
       body: JSON.stringify({
         fileName: fileName,

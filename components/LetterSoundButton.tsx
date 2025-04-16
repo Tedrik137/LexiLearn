@@ -1,5 +1,10 @@
-import { Animated, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { useState } from "react";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 interface Props {
   onPress: () => void;
@@ -16,24 +21,19 @@ export default function LetterSoundButton({
   selected,
   disabled,
 }: Props) {
-  const [scaleValue] = useState(new Animated.Value(1));
+  const scaleValue = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue.value }],
+  }));
 
   const handlePressIn = () => {
-    Animated.timing(scaleValue, {
-      toValue: 1.2,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-
+    scaleValue.value = withTiming(1.2, { duration: 200 });
     onPress();
   };
 
   const handlePressOut = () => {
-    Animated.timing(scaleValue, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
+    scaleValue.value = withTiming(1, { duration: 200 });
   };
 
   return (
@@ -45,7 +45,8 @@ export default function LetterSoundButton({
       <Animated.View
         style={[
           styles.button,
-          { transform: [{ scale: scaleValue }], width: size, height: size },
+          animatedStyle,
+          [{ width: size, height: size }],
           selected
             ? {
                 backgroundColor: "green",

@@ -4,6 +4,7 @@ import CustomScrollView from "@/components/CustomScrollView";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useAuthStore } from "@/stores/authStore";
+import HomeGrid from "@/components/HomeGrid";
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
@@ -12,9 +13,7 @@ export default function HomeScreen() {
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
-      <ThemedView>
-        <ThemedText>Home Screen Content {user?.displayName}</ThemedText>
-      </ThemedView>
+      <HomeGrid />
     </CustomScrollView>
   );
 }
