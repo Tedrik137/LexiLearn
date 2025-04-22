@@ -12,9 +12,13 @@ expo-env.d.ts
 .env
 
 firebaseConfig.ts
+firebaseAdmin.server.ts
 firebaseDebug.log
 storage.rules
 firebase-debug.log
+firestore-debug.log
+firestore.indexes.json
+firestore.rules
 
 # Native
 *.orig.*
@@ -43,3 +47,5 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+~/.secrets/
