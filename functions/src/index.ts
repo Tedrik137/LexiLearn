@@ -1,24 +1,14 @@
-import * as functions from "firebase-functions/v1"; // Use v1 for callable unless you prefer v2 onRequest
-import * as admin from "firebase-admin";
+import * as functions from "firebase-functions/v1";
 import { UserRecord } from "firebase-functions/v1/auth";
 import * as logger from "firebase-functions/logger";
-
-// --- Initialization (Ensure this runs only once) ---
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-  logger.info("Firebase Admin SDK Initialized in Cloud Function");
-}
-const adminStorage = admin.storage(); // Get storage instance once
-const GOOGLE_TTS_API_KEY = functions.config().google.tts_api_key; // Ensure this is set in your environment variables
-
+import { firestore, storage } from "./firebaseAdminConfig";
+import { FieldValue } from "firebase-admin/firestore";
 // --- Auth Trigger (Keep this as is) ---
 export const initializeUserData = functions.auth
   .user()
   .onCreate(async (user: UserRecord) => {
-    // ... your existing user initialization logic ...
     const { uid } = user;
-    const db = admin.firestore();
-    const userRef = db.collection("users").doc(uid);
+    const userRef = firestore.collection("users").doc(uid);
 
     logger.info(`Initializing data for new user: ${uid}`);
 
@@ -29,7 +19,7 @@ export const initializeUserData = functions.auth
         displayName: user.displayName || "",
         photoURL: user.photoURL || "",
         emailVerified: user.emailVerified,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         xp: 0,
         currentStreak: 0,
       });
@@ -40,8 +30,9 @@ export const initializeUserData = functions.auth
   });
 
 // --- NEW: HTTP Callable Function for TTS ---
-export const getOrCreateTTSAudio = functions.https.onCall(
-  async (data, context) => {
+export const getOrCreateTTSAudio = functions
+  .runWith({ secrets: ["GOOGLE_TTS_API_KEY"] })
+  .https.onCall(async (data, context) => {
     // 1. Authentication Check: Ensure the user is authenticated.
     if (!context.auth) {
       logger.error("TTS request received without authentication.");
@@ -51,7 +42,9 @@ export const getOrCreateTTSAudio = functions.https.onCall(
       );
     }
     // Optional: Log the UID of the authenticated user making the request
-    // logger.info(`TTS request received from authenticated user: ${context.auth.uid}`);
+    logger.info(
+      `TTS request received from authenticated user: ${context.auth.uid}`
+    );
 
     // 2. Input Validation
     const { fileName, text, language } = data;
@@ -63,7 +56,7 @@ export const getOrCreateTTSAudio = functions.https.onCall(
       );
     }
 
-    if (!GOOGLE_TTS_API_KEY) {
+    if (!process.env.GOOGLE_TTS_API_KEY) {
       logger.error(
         "Google TTS API Key is not configured in function environment variables."
       );
@@ -75,7 +68,7 @@ export const getOrCreateTTSAudio = functions.https.onCall(
 
     // 3. Logic from your original API route
     try {
-      const bucket = adminStorage.bucket(); // Use initialized storage
+      const bucket = storage.bucket(); // Use initialized storage
       const filePath = `tts/${fileName}`; // Define path in storage
       const file = bucket.file(filePath);
 
@@ -105,7 +98,7 @@ export const getOrCreateTTSAudio = functions.https.onCall(
       logger.info(
         `File ${fileName} not found in cache, calling Google TTS API for text: "${text}"`
       );
-      const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`;
+      const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_TTS_API_KEY}`;
       const ttsPayload = {
         input: { text: text },
         voice: { languageCode: language, ssmlGender: "NEUTRAL" }, // Adjust voice params as needed
@@ -168,5 +161,4 @@ export const getOrCreateTTSAudio = functions.https.onCall(
           "An unexpected error occurred processing the TTS request."
       );
     }
-  }
-);
+  });

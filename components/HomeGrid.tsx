@@ -23,6 +23,7 @@ export default function HomeGrid() {
       <ThemedView style={styles.container}>
         {languages.map((language) => (
           <AnimatedNavigationButton
+            key={language.id}
             buttonText={language.name}
           ></AnimatedNavigationButton>
         ))}

@@ -1,13 +1,5 @@
-import type { DecodedIdToken } from "firebase-admin/auth";
-
-// filepath: /home/devricky/git/react-native/LexiLearn/app/api/utils/authMiddleware.ts
-import admin from "firebase-admin"; // Import directly
-
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-  console.log("Firebase Admin SDK Initialized");
-}
-// --- End Initialization Logic ---
+import { DecodedIdToken } from "firebase-admin/auth";
+import { auth as adminAuth } from "./firebaseAdminConfig";
 
 interface AuthResult {
   success: boolean;
@@ -18,13 +10,6 @@ interface AuthResult {
 export async function verifyFirebaseToken(
   request: Request
 ): Promise<AuthResult> {
-  const adminAuth = adminAuthInstance || initializeAdminAuth();
-
-  if (!adminAuth) {
-    console.error("Admin Auth SDK not initialized for verification.");
-    return { success: false, error: "Auth service unavailable" };
-  }
-
   const authorization = request.headers.get("Authorization");
   if (!authorization?.startsWith("Bearer ")) {
     return { success: false, error: "Missing or invalid Authorization header" };
