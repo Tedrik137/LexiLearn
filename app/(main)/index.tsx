@@ -14,7 +14,7 @@ export default function HomeScreen() {
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
     >
-      <HomeGrid></HomeGrid>
+      <PictureQuiz language={"en-au"} />
     </CustomScrollView>
   );
 }

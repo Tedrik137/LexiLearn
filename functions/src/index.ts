@@ -101,7 +101,7 @@ export const getOrCreateTTSAudio = functions
       const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_TTS_API_KEY}`;
       const ttsPayload = {
         input: { text: text },
-        voice: { languageCode: language, ssmlGender: "NEUTRAL" }, // Adjust voice params as needed
+        voice: { languageCode: language, ssmlGender: "MALE" }, // Adjust voice params as needed
         audioConfig: { audioEncoding: "MP3" },
       };
 
