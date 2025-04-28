@@ -1,11 +1,14 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { Slot } from "expo-router";
+import { Slot, Stack } from "expo-router";
 
 export default function RootLayout() {
   return (
     <ThemedView style={{ flex: 1 }}>
-      <Slot></Slot>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="[quiz]" options={{ headerShown: false }} />
+      </Stack>
     </ThemedView>
   );
 }

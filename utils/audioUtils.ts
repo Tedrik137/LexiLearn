@@ -1,6 +1,7 @@
 import * as FileSystem from "expo-file-system";
 import { Audio } from "expo-av";
 import { getFunctions, httpsCallable } from "firebase/functions"; // Import Functions SDK
+import { LanguageCode } from "@/types/languages";
 
 // Assuming firebaseApp is initialized and exported from firebaseConfig.ts
 // Make sure connectFunctionsEmulator is called in firebaseConfig.ts during development!
@@ -32,7 +33,7 @@ async function playAudio(uri: string, requestId: number) {
   }
 }
 
-export async function playSound(text: string, language: string) {
+export async function playSound(text: string, language: LanguageCode) {
   if (!text || !language) return;
 
   const requestId = ++currentRequestId;

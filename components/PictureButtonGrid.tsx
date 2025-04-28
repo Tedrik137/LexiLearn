@@ -1,7 +1,7 @@
 import LetterSoundButton from "./LetterSoundButton";
 import { playSound } from "@/utils/audioUtils";
 import { IconSymbol } from "./ui/IconSymbol";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { ThemedView } from "./ThemedView";
 import { Pressable, StyleSheet } from "react-native";
 import { ThemedText } from "./ThemedText";

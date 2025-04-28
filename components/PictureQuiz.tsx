@@ -5,7 +5,7 @@ import PictureButtonGrid from "./PictureButtonGrid";
 import { ThemedView } from "./ThemedView";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
 import QuizResults from "./PictureQuizResults";

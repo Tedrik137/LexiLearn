@@ -4,7 +4,7 @@ import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { IconSymbol } from "./ui/IconSymbol";
 import LetterSoundButton from "./LetterSoundButton";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { playSound } from "@/utils/audioUtils";
 import { Pressable } from "react-native";
 import { useState, useEffect } from "react";

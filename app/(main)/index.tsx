@@ -8,8 +8,6 @@ import HomeGrid from "@/components/HomeGrid";
 import PictureQuiz from "@/components/PictureQuiz";
 
 export default function HomeScreen() {
-  const user = useAuthStore((state) => state.user);
-
   return (
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -17,7 +15,6 @@ export default function HomeScreen() {
       <HomeGrid></HomeGrid>
     </CustomScrollView>
   );
-  ``;
 }
 
 const styles = StyleSheet.create({

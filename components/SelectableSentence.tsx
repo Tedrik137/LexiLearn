@@ -48,7 +48,7 @@ export default function SelectableSentence({
     }
 
     if (quizMode === "practice") {
-      playSound(word, "en-au");
+      playSound(word, "en-AU");
     }
     // Update React state
     setSelectedWordId(uniqueId);
@@ -86,7 +86,7 @@ export default function SelectableSentence({
 
       <ThemedView style={styles.targetSoundContainer}>
         <LetterSoundButton
-          onPress={() => playSound(currentTarget, "en-au")}
+          onPress={() => playSound(currentTarget, "en-AU")}
           size={80}
           selected={false}
           disabled={showFeedback}

@@ -19,6 +19,7 @@ const MAPPING = {
   "bin.xmark": "delete",
   xmark: "close",
   "speaker.3": "volume-up",
+  "arrow.right.circle": "double-arrow",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

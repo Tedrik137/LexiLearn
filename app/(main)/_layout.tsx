@@ -55,7 +55,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="(quiz)"
+        name="[language]"
         options={{
           href: null,
         }}

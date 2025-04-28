@@ -6,7 +6,7 @@ import { ThemedText } from "./ThemedText";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
 import LetterSoundGrid from "./LetterSoundGrid";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { playSound } from "@/utils/audioUtils";
 
 interface Props {
