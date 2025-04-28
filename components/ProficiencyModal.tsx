@@ -27,7 +27,9 @@ export default function ProficiencyModal({
   const handleChooseProficiency = () => {
     setIsSubmitting(true);
     // navigate to the quiz screen based on proficiency
-    router.push(`/(main)/quiz/${language.name}?proficiency=${proficiency}`);
+    router.push(`/(main)/(quiz)/${language.code}?proficiency=${proficiency}`);
+
+    setModalVisible(false);
   };
 
   return (
@@ -70,11 +72,15 @@ export default function ProficiencyModal({
             </LanguageModalButton>
           ))}
           <Pressable
-            style={[styles.submitButton]}
+            style={[
+              styles.submitButton,
+              proficiency === null && styles.disabled,
+            ]}
             onPress={() => {
-              setModalVisible(!visible);
+              setModalVisible(false);
               handleChooseProficiency();
             }}
+            disabled={proficiency === null || isSubmitting}
           >
             <Text style={styles.textStyle}>Submit</Text>
           </Pressable>
@@ -145,5 +151,8 @@ const styles = StyleSheet.create({
     width: 150,
     height: 40,
     backgroundColor: "#328f32",
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });
