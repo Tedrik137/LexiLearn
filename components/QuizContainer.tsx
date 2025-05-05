@@ -8,6 +8,7 @@ import QuizProgressBar from "./QuizProgressBar";
 import LetterSoundGrid from "./LetterSoundGrid";
 import { LanguageCode } from "@/types/languages";
 import { playSound } from "@/utils/audioUtils";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
   letters: string[];
@@ -41,6 +42,7 @@ export default function QuizContainer({
   });
   const [currentTargetLetter, setCurrentTargetLetter] = useState<string>("a");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
 
   // Initialize the quiz when component mounts
   useEffect(() => {
@@ -62,21 +64,16 @@ export default function QuizContainer({
   const handleAnswerSubmit = (selectedLetter: string) => {
     // Check if the answer is correct
     const isCorrect = selectedLetter === currentTargetLetter;
-    if (isCorrect) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        score: prevQuiz.score + 1,
-      }));
-    }
+    // Queue state updates for score and feedback
+    setQuiz((prevQuiz) => ({
+      ...prevQuiz,
+      score: isCorrect ? prevQuiz.score + 1 : prevQuiz.score,
+      lastAnswerCorrect: isCorrect,
+      // Show feedback immediately only in practice mode
+      showFeedback: prevQuiz.quizMode === "practice",
+    }));
 
     if (quiz.quizMode === "practice") {
-      // Show feedback in practice mode
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        lastAnswerCorrect: isCorrect,
-        showFeedback: true,
-      }));
-
       // Move to next question after a delay
       setTimeout(() => {
         moveToNextQuestion();
@@ -88,26 +85,36 @@ export default function QuizContainer({
   };
 
   const moveToNextQuestion = () => {
-    const nextQuestionNumber = quiz.currentQuestion + 1;
+    // Use functional update to ensure we operate on the latest state
+    setQuiz((prevQuiz) => {
+      const nextQuestionNumber = prevQuiz.currentQuestion + 1;
 
-    if (nextQuestionNumber >= maxQuestions) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        quizCompleted: true,
-        showFeedback: false,
-      }));
-    } else {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        currentQuestion: nextQuestionNumber,
-        showFeedback: false,
-      }));
-      const nextTargetLetter = quiz.quizLetters[nextQuestionNumber];
-      setCurrentTargetLetter(nextTargetLetter);
+      if (nextQuestionNumber >= maxQuestions) {
+        // --- Quiz Complete ---
+        // Calculate XP based on the score from the latest state (prevQuiz.score)
+        const xpGained = Math.floor((prevQuiz.score / maxQuestions) * 100);
+        updateUserXP(xpGained); // Side effect is okay here
 
-      // Play the sound for the next question
-      playSound(nextTargetLetter, language);
-    }
+        // Return final state
+        return {
+          ...prevQuiz,
+          quizCompleted: true,
+          showFeedback: false, // Ensure feedback is off on results screen
+          currentQuestion: nextQuestionNumber, // Update question number to maxQuestions
+        };
+      } else {
+        const nextTargetLetter = quiz.quizLetters[nextQuestionNumber];
+        setCurrentTargetLetter(nextTargetLetter);
+
+        // Play the sound for the next question
+        playSound(nextTargetLetter, language);
+        return {
+          ...prevQuiz,
+          currentQuestion: nextQuestionNumber,
+          showFeedback: false, // Hide feedback for the next question
+        };
+      }
+    });
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {

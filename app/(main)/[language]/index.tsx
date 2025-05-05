@@ -55,6 +55,48 @@ export default function LanguageQuizzes() {
       </CustomScrollView>
     );
   }
+  if (proficiency === "intermediate") {
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      >
+        <ThemedText>
+          Completing quizzes will give you XP and unlock more quizzes.
+        </ThemedText>
+        <ThemedView style={[styles.container]}>
+          {/* insert intermediate quizzes here... */}
+        </ThemedView>
+      </CustomScrollView>
+    );
+  }
+  if (proficiency === "advanced") {
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      >
+        <ThemedText>
+          Completing quizzes will give you XP and unlock more quizzes.
+        </ThemedText>
+        <ThemedView style={[styles.container]}>
+          {/* insert advanced quizzes here... */}
+        </ThemedView>
+      </CustomScrollView>
+    );
+  }
+  if (proficiency === "fluent") {
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      >
+        <ThemedText>
+          Completing quizzes will give you XP and unlock more quizzes.
+        </ThemedText>
+        <ThemedView style={[styles.container]}>
+          {/* insert fluent quizzes here... */}
+        </ThemedView>
+      </CustomScrollView>
+    );
+  }
 }
 
 const styles = StyleSheet.create({

@@ -7,6 +7,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import StreakBar from "./StreakBar";
 import Avatar from "./Avatar";
 import Animated, { useAnimatedRef } from "react-native-reanimated";
+import HeaderXPDisplay from "./HeaderXPDisplay";
 
 const HEADER_HEIGHT = 75;
 
@@ -38,6 +39,7 @@ export default function CustomScrollView({
         >
           <Avatar />
           <StreakBar streak={2} />
+          <HeaderXPDisplay />
         </Animated.View>
         <ThemedView style={styles.content}>{children}</ThemedView>
       </Animated.ScrollView>

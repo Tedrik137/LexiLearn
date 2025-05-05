@@ -11,6 +11,7 @@ import LetterSoundButton from "./LetterSoundButton";
 import { playSound } from "@/utils/audioUtils";
 import { IconSymbol } from "./ui/IconSymbol";
 import { sentences } from "@/entities/sentences";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
   language: LanguageCode;
@@ -48,6 +49,7 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
   const [currentTarget, setCurrentTarget] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isQuestionTransitioning, setIsQuestionTransitioning] = useState(false);
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
 
   // Handler for when user submits an answer
   const handleAnswerSubmit = (selectedWord: string) => {
@@ -93,6 +95,10 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         currentQuestion: nextQuestionNumber,
         showFeedback: false,
       }));
+
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      updateUserXP(xpGained);
 
       setIsQuestionTransitioning(false);
     } else {

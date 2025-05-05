@@ -9,6 +9,7 @@ import { LanguageCode } from "@/types/languages";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
 import QuizResults from "./PictureQuizResults";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
   language: LanguageCode;
@@ -43,6 +44,8 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
+
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
 
   // Initialize the quiz when component mounts
   useEffect(() => {
@@ -103,6 +106,10 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
         currentQuestion: nextQuestionNumber,
         showFeedback: false,
       }));
+
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      updateUserXP(xpGained);
     } else {
       const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
 
