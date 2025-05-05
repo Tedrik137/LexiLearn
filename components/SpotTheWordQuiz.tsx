@@ -12,6 +12,7 @@ import { playSound } from "@/utils/audioUtils";
 import { IconSymbol } from "./ui/IconSymbol";
 import { sentences } from "@/entities/sentences";
 import { useAuthStore } from "@/stores/authStore";
+import SpotTheWordQuizResults from "./SpotTheWordQuizResults";
 
 interface Props {
   language: LanguageCode;
@@ -255,20 +256,16 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         </>
       )}
 
-      {quiz.quizCompleted && quiz.answers.length && (
-        <ThemedView style={styles.resultContainer}>
-          <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
-          <ThemedText style={styles.resultMode}>
-            Mode: {quiz.quizMode === "practice" ? "Practice" : "Test"}
-          </ThemedText>
-          <ThemedText style={styles.resultScore}>
-            Your score: {quiz.score} out of {maxQuestions}
-          </ThemedText>
-          <Pressable style={styles.resetButton} onPress={() => setupQuiz()}>
-            <ThemedText style={styles.resetButtonText}>Try Again</ThemedText>
-          </Pressable>
-        </ThemedView>
-      )}
+      {quiz.quizCompleted &&
+        quiz.answers.length === quiz.quizSentences.length && (
+          <SpotTheWordQuizResults
+            setupQuiz={setupQuiz}
+            quizMode={quiz.quizMode}
+            score={quiz.score}
+            maxQuestions={maxQuestions}
+            answers={quiz.answers}
+          />
+        )}
     </ThemedView>
   );
 }

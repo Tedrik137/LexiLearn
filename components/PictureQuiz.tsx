@@ -8,7 +8,7 @@ import QuizProgressBar from "./QuizProgressBar";
 import { LanguageCode } from "@/types/languages";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
-import QuizResults from "./PictureQuizResults";
+import PictureQuizResults from "./PictureQuizResults";
 import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
@@ -247,7 +247,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
 
       {quiz.quizCompleted &&
         quiz.quizWordPictures.length === quiz.answers.length && (
-          <QuizResults
+          <PictureQuizResults
             setupQuiz={setupQuiz}
             maxQuestions={maxQuestions}
             quizMode={quiz.quizMode}
