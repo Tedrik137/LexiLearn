@@ -9,18 +9,17 @@ import {
   increment,
   DocumentData,
 } from "firebase/firestore"; // Import Firestore functions
+import { checkLevelUp } from "@/utils/XP";
 
 // Define an interface for your Firestore user data structure
 interface FirestoreUserData extends DocumentData {
   uid: string;
-  email?: string;
   displayName?: string;
-  photoURL?: string;
-  emailVerified?: boolean;
   createdAt?: any; // Consider using Firestore Timestamp type if possible
   xp?: number;
   currentStreak?: number;
-  // Add any other fields you store in Firestore
+  level: number;
+  currentStreakStart?: any;
 }
 
 interface AuthState {
@@ -125,8 +124,18 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       const userDocRef = doc(firestore, "users", uid);
       try {
+        // check if the user leveled up
+        const currentLevel = get().firestoreUser?.level || 1;
+        const currentXP = get().firestoreUser?.xp || 0;
+        const { level: newLevel, xp: newXP } = checkLevelUp(
+          currentXP + xpGained,
+          currentLevel
+        );
+
+        // Update the user document in Firestore
         await updateDoc(userDocRef, {
-          xp: increment(xpGained),
+          xp: newLevel === currentLevel ? increment(xpGained) : newXP,
+          level: newLevel,
         });
         console.log(`XP updated by ${xpGained} for user ${uid}`);
         // No need to manually set state here if the listener is active

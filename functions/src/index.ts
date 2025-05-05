@@ -15,13 +15,12 @@ export const initializeUserData = functions.auth
     try {
       await userRef.set({
         uid: uid,
-        email: user.email || "",
         displayName: user.displayName || "",
-        photoURL: user.photoURL || "",
-        emailVerified: user.emailVerified,
         createdAt: FieldValue.serverTimestamp(),
         xp: 0,
         currentStreak: 0,
+        currentStreakStart: FieldValue.serverTimestamp(),
+        level: 1,
       });
       logger.info(`Successfully initialized data for user: ${uid}`);
     } catch (error) {
