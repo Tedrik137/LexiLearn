@@ -38,7 +38,6 @@ export default function CustomScrollView({
           ]}
         >
           <Avatar />
-          <StreakBar streak={2} />
           <HeaderXPDisplay />
         </Animated.View>
         <ThemedView style={styles.content}>{children}</ThemedView>

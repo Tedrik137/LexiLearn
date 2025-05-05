@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     alignItems: "center",
     height: 20,
+    marginRight: 10,
   },
   outerContainer: {
     backgroundColor: "#e8ebed",
