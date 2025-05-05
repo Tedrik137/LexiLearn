@@ -100,16 +100,20 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   const moveToNextQuestion = () => {
     const nextQuestionNumber = quiz.currentQuestion + 1;
     if (nextQuestionNumber >= maxQuestions) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        quizCompleted: true,
-        currentQuestion: nextQuestionNumber,
-        showFeedback: false,
-      }));
+      // Use functional update to ensure score is latest
+      setQuiz((prevQuiz) => {
+        // Calculate XP using the score from the updated state (prevQuiz)
+        const xpGained = Math.floor((prevQuiz.score / maxQuestions) * 100);
+        updateUserXP(xpGained); // Call side effect after calculation
 
-      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
-
-      updateUserXP(xpGained);
+        // Return the final state
+        return {
+          ...prevQuiz,
+          quizCompleted: true,
+          currentQuestion: nextQuestionNumber, // Mark completion
+          showFeedback: false, // Ensure feedback is off
+        };
+      });
     } else {
       const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
 

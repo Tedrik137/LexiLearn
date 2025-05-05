@@ -87,30 +87,34 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
   };
 
   const moveToNextQuestion = () => {
-    const nextQuestionNumber = quiz.currentQuestion + 1;
-    if (nextQuestionNumber >= maxQuestions) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        quizCompleted: true,
-        currentQuestion: nextQuestionNumber,
-        showFeedback: false,
-      }));
+    // Use functional update to ensure we operate on the latest state
+    setQuiz((prevQuiz) => {
+      const nextQuestionNumber = prevQuiz.currentQuestion + 1;
 
-      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+      if (nextQuestionNumber >= maxQuestions) {
+        // --- Quiz Complete ---
+        // Calculate XP based on the score from the latest state (prevQuiz.score)
+        const xpGained = Math.floor((prevQuiz.score / maxQuestions) * 100);
+        updateUserXP(xpGained); // Side effect is okay here
 
-      updateUserXP(xpGained);
+        // Return final state
+        return {
+          ...prevQuiz,
+          quizCompleted: true,
+          showFeedback: false, // Ensure feedback is off on results screen
+          currentQuestion: nextQuestionNumber, // Update question number to maxQuestions
+        };
+      } else {
+        selectRandomWord(quiz.quizSentences[nextQuestionNumber]);
+        setIsQuestionTransitioning(false);
 
-      setIsQuestionTransitioning(false);
-    } else {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        showFeedback: false,
-        currentQuestion: nextQuestionNumber,
-      }));
-
-      selectRandomWord(quiz.quizSentences[nextQuestionNumber]);
-      setIsQuestionTransitioning(false);
-    }
+        return {
+          ...prevQuiz,
+          currentQuestion: nextQuestionNumber,
+          showFeedback: false, // Hide feedback for the next question
+        };
+      }
+    });
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
