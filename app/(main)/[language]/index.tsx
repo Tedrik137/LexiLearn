@@ -2,12 +2,37 @@ import CustomScrollView from "@/components/CustomScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { useAuthStore } from "@/stores/authStore";
+import { LanguageCode } from "@/types/languages";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
+import { stringToBytes } from "uuid/dist/cjs/v35";
 
 export default function LanguageQuizzes() {
-  const { proficiency, language } = useLocalSearchParams();
+  const { proficiency, language } = useLocalSearchParams<{
+    proficiency?: string;
+    language?: string;
+  }>();
   const router = useRouter();
+  const setSelectedLanguage = useAuthStore(
+    (state) => state.setSelectedLanguage
+  );
+
+  useEffect(() => {
+    // Set the selected language in the auth store
+    if (language) {
+      setSelectedLanguage(language as LanguageCode);
+    }
+  }, [language, setSelectedLanguage]);
+
+  if (!language) {
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      />
+    );
+  }
 
   if (proficiency === "beginner") {
     return (

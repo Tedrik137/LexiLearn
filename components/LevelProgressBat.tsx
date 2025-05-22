@@ -7,13 +7,16 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { ThemedText } from "./ThemedText";
-import { useAuthStore } from "@/stores/authStore";
 import { requiredXP } from "@/utils/XP";
 
-export default function LevelProgressBar() {
-  const firestoreUser = useAuthStore((state) => state.firestoreUser);
-  const currentStep = firestoreUser?.xp ?? 100;
-  const maxSteps = requiredXP(firestoreUser?.level ?? 10);
+interface Props {
+  xp: number;
+  level: number;
+}
+
+export default function LevelProgressBar({ xp, level }: Props) {
+  const currentStep = xp ?? 100;
+  const maxSteps = requiredXP(level ?? 10);
   const progressValue = useSharedValue(currentStep);
 
   // Update the progress value when currentStep changes
@@ -40,9 +43,7 @@ export default function LevelProgressBar() {
           style={[styles.innerContainer, progressBarAnimationStyle]}
         />
       </View>
-      <ThemedText style={[styles.progressText]}>
-        Level: {firestoreUser?.level}
-      </ThemedText>
+      <ThemedText style={[styles.progressText]}>Level: {level}</ThemedText>
     </View>
   );
 }

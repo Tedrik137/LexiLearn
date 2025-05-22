@@ -7,10 +7,30 @@ import { LanguageCode } from "@/types/languages";
 import { ThemedText } from "@/components/ThemedText"; // Import ThemedText for error message
 import PictureQuiz from "@/components/PictureQuiz";
 import SpotTheWordQuiz from "@/components/SpotTheWordQuiz";
+import { useAuthStore } from "@/stores/authStore";
+import { useEffect } from "react";
 
-export default function LanguageQuizzes() {
+export default function LanguageQuiz() {
   let { proficiency, language, quiz } = useLocalSearchParams();
   const router = useRouter();
+  const setSelectedLanguage = useAuthStore(
+    (state) => state.setSelectedLanguage
+  );
+
+  useEffect(() => {
+    // Set the selected language in the auth store
+    if (language) {
+      setSelectedLanguage(language as LanguageCode);
+    }
+  }, [language, setSelectedLanguage]);
+
+  if (!language) {
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      />
+    );
+  }
 
   // Assert language type after validation
   const validLanguage = language as LanguageCode;

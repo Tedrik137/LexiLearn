@@ -52,6 +52,23 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     setupQuiz();
   }, [wordPictureTypes]);
 
+  useEffect(() => {
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        updateUserXP(xpGained, language); // Side effect is okay here
+      }
+    } else {
+      console.log(`Quiz completed. No XP gained for language ${language}.`);
+    }
+  }, [quiz.quizCompleted]);
+
   // select random word,image pair as current question
   const selectRandomTarget = () => {
     if (wordPictureTypes.length > 0)
@@ -102,10 +119,6 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     if (nextQuestionNumber >= maxQuestions) {
       // Use functional update to ensure score is latest
       setQuiz((prevQuiz) => {
-        // Calculate XP using the score from the updated state (prevQuiz)
-        const xpGained = Math.floor((prevQuiz.score / maxQuestions) * 100);
-        updateUserXP(xpGained); // Call side effect after calculation
-
         // Return the final state
         return {
           ...prevQuiz,

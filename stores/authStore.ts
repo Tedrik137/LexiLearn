@@ -6,34 +6,36 @@ import {
   doc,
   onSnapshot,
   updateDoc,
-  increment,
+  collection,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+  setDoc,
   DocumentData,
+  QuerySnapshot,
 } from "firebase/firestore"; // Import Firestore functions
 import { checkLevelUp } from "@/utils/XP";
+import { LanguageCode } from "@/types/languages";
 
-// Define an interface for your Firestore user data structure
-interface FirestoreUserData extends DocumentData {
-  uid: string;
-  displayName?: string;
-  createdAt?: any; // Consider using Firestore Timestamp type if possible
-  xp?: number;
-  currentStreak?: number;
+interface LanguageProgress {
+  xp: number;
   level: number;
-  currentStreakStart?: any;
+  languageCode: LanguageCode;
 }
 
 interface AuthState {
   // State
   user: User | null; // Firebase Auth User
-  firestoreUser: FirestoreUserData | null; // Firestore User Data
   initializing: boolean;
   loading: boolean; // Consider separate loading states if needed (e.g., authLoading, firestoreLoading)
-
+  currentLanguageProgress: LanguageProgress | null; // Current language progress
+  selectedLanguage: LanguageCode | null; // Currently selected language for progress
   // Actions
   setUser: (user: User | null) => void;
-  setFirestoreUser: (firestoreUser: FirestoreUserData | null) => void; // New setter
   setInitializing: (initializing: boolean) => void;
   setLoading: (loading: boolean) => void;
+  setSelectedLanguage: (languageCode: LanguageCode | null) => void; // Set selected language for progress
 
   // Auth operations
   signUp: (
@@ -48,27 +50,50 @@ interface AuthState {
   signOut: () => Promise<{ success: boolean; error?: string }>;
 
   // Firestore operations
-  updateUserXP: (xpGained: number) => Promise<void>; // Action to update XP
+  updateUserXP: (xpGained: number, languageCode: LanguageCode) => Promise<void>; // Action to update XP
+
+  fetchUserLanguageProgress: (languageCode: LanguageCode) => Promise<void>; // Action to fetch user language progress
 
   // Initialize auth listener
   initializeAuthListener: () => () => void; // Returns the unsubscribe function
+  clearLanguageProgressListener: () => void; // Function to clear the language progress listener
 }
 
 export const useAuthStore = create<AuthState>((set, get) => {
-  let unsubscribeFirestore: (() => void) | null = null; // Store Firestore listener cleanup
+  let unsubscribeLanguageProgressListener: (() => void) | null = null;
 
   return {
     // Initial state
     user: null,
-    firestoreUser: null,
     initializing: true,
     loading: false,
+    currentLanguageProgress: null,
+    selectedLanguage: null,
 
     // State setters
     setUser: (user) => set({ user }),
-    setFirestoreUser: (firestoreUser) => set({ firestoreUser }),
     setInitializing: (initializing) => set({ initializing }),
     setLoading: (loading) => set({ loading }),
+    setSelectedLanguage: (languageCode) => {
+      const currentSelected = get().selectedLanguage;
+
+      if (
+        currentSelected === languageCode &&
+        get().currentLanguageProgress?.languageCode === languageCode &&
+        get().currentLanguageProgress !== null
+      ) {
+        console.log("Language already selected, not updating.");
+        return;
+      }
+
+      set({ selectedLanguage: languageCode });
+      if (languageCode) {
+        get().fetchUserLanguageProgress(languageCode);
+      } else {
+        get().clearLanguageProgressListener();
+        set({ currentLanguageProgress: null });
+      }
+    },
 
     // Auth operations
     signUp: async (email, password, displayName) => {
@@ -101,7 +126,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       set({ loading: true });
       try {
         const result = await AuthService.signOutUser();
-        // Listener will set user/firestoreUser to null
+        // Listener will set user to null
         return result;
       } catch (error: any) {
         return { success: false, error: error.message || "Sign out failed" };
@@ -111,37 +136,147 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     // Firestore operations
-    updateUserXP: async (xpGained) => {
+    updateUserXP: async (xpGained: number, languageCode: LanguageCode) => {
       const uid = get().user?.uid;
       if (!uid) {
         console.error("Cannot update XP: User not logged in.");
         return;
       }
       if (xpGained <= 0) {
-        console.log("No XP gained.");
+        console.log("No XP gained for language: ", languageCode);
         return;
       }
 
-      const userDocRef = doc(firestore, "users", uid);
+      const progressColRef = collection(firestore, "userLanguageProgress");
+      const q = query(
+        progressColRef,
+        where("userId", "==", uid),
+        where("languageCode", "==", languageCode)
+      );
+
+      // No need to set loading here if the listener provides optimistic updates
+      // or if UI handles loading state based on currentLanguageProgress being null initially
+
       try {
         // check if the user leveled up
-        const currentLevel = get().firestoreUser?.level || 1;
-        const currentXP = get().firestoreUser?.xp || 0;
+        const querySnapshot = await getDocs(q);
+
+        let currentXP = 0;
+        let currentLevel = 0;
+        let docRef;
+        let isNewDoc = false;
+
+        if (querySnapshot.empty) {
+          // If no document exists, create a new one
+          docRef = doc(progressColRef);
+          isNewDoc = true;
+        } else {
+          // If document exists, get the reference
+          const progressDoc = querySnapshot.docs[0];
+          docRef = progressDoc.ref;
+          currentXP = progressDoc.data().xp || 0;
+          currentLevel = progressDoc.data().level || 1;
+        }
+
         const { level: newLevel, xp: newXP } = checkLevelUp(
           currentXP + xpGained,
           currentLevel
         );
 
-        // Update the user document in Firestore
-        await updateDoc(userDocRef, {
-          xp: newLevel === currentLevel ? increment(xpGained) : newXP,
+        const progressData = {
+          userId: uid,
+          languageCode: languageCode,
+          xp: newXP,
           level: newLevel,
-        });
-        console.log(`XP updated by ${xpGained} for user ${uid}`);
-        // No need to manually set state here if the listener is active
+          lastUpdated: serverTimestamp(),
+        };
+
+        if (isNewDoc) {
+          await setDoc(docRef, progressData);
+          console.log(
+            `Initial XP set for user ${uid}, language ${languageCode}. New XP: ${newXP}, New Level: ${newLevel}`
+          );
+        } else {
+          await updateDoc(docRef, progressData);
+          console.log(
+            `XP updated by ${xpGained} for user ${uid}, language ${languageCode}. New XP: ${newXP}, New Level: ${newLevel}`
+          );
+        }
+
+        // The listener set up by fetchUserLanguageProgress will update currentLanguageProgress.
+        // For immediate feedback, you could still set it here, but it might cause a quick double update.
+        // set({ currentLanguageProgress: { xp: newXP, level: newLevel, languageCode }});
       } catch (error) {
-        console.error(`Error updating XP for user ${uid}:`, error);
+        console.error(
+          `Error updating XP for user ${uid}, language ${languageCode}:`,
+          error
+        );
         // Optionally try to refetch if listener failed?
+      }
+    },
+
+    fetchUserLanguageProgress: async (languageCode) => {
+      const uid = get().user?.uid;
+
+      if (unsubscribeLanguageProgressListener) {
+        unsubscribeLanguageProgressListener(); // Unsubscribe from the previous listener to fetch different language progress
+        unsubscribeLanguageProgressListener = null;
+      }
+
+      if (!uid) {
+        console.error("Cannot fetch language progress: User not logged in.");
+        set({ currentLanguageProgress: null });
+        return;
+      }
+
+      set({ loading: true }); // Indicate loading for initial fetch
+
+      const progressColRef = collection(firestore, "userLanguageProgress");
+      const q = query(
+        progressColRef,
+        where("userId", "==", uid),
+        where("languageCode", "==", languageCode)
+      );
+
+      unsubscribeLanguageProgressListener = onSnapshot(
+        q,
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          if (snapshot.empty) {
+            set({
+              currentLanguageProgress: {
+                xp: 0,
+                level: 1,
+                languageCode: languageCode,
+              },
+              loading: false,
+            });
+          } else {
+            const progressDocData = snapshot.docs[0].data();
+            set({
+              currentLanguageProgress: {
+                xp: progressDocData.xp,
+                level: progressDocData.level,
+                languageCode: progressDocData.languageCode as LanguageCode,
+              },
+              loading: false,
+            });
+          }
+        },
+        (error) => {
+          console.error(
+            `Error listening to language progress for user ${uid}, language ${languageCode}:`,
+            error
+          );
+          set({ currentLanguageProgress: null, loading: false });
+        }
+      );
+    },
+
+    clearLanguageProgressListener: () => {
+      if (unsubscribeLanguageProgressListener) {
+        unsubscribeLanguageProgressListener();
+        unsubscribeLanguageProgressListener = null;
+        console.log("Cleared language progress listener.");
       }
     },
 
@@ -150,12 +285,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
       console.log("Initializing Auth Listener...");
       const unsubscribeAuth = auth.onAuthStateChanged(async (authUser) => {
         console.log("Auth State Changed:", authUser?.uid);
-        // Clean up previous Firestore listener
-        if (unsubscribeFirestore) {
-          console.log("Unsubscribing previous Firestore listener.");
-          unsubscribeFirestore();
-          unsubscribeFirestore = null;
-        }
 
         if (authUser) {
           // User is signed in
@@ -172,44 +301,15 @@ export const useAuthStore = create<AuthState>((set, get) => {
           }
           set({ user: finalUser }); // Set Auth user state
 
-          // Set up Firestore listener for real-time updates
-          const userDocRef = doc(firestore, "users", finalUser.uid);
-          console.log(
-            `Setting up Firestore listener for user: ${finalUser.uid}`
-          );
-          unsubscribeFirestore = onSnapshot(
-            userDocRef,
-            (docSnap) => {
-              if (docSnap.exists()) {
-                console.log(
-                  `Firestore data received for ${finalUser.uid}:`,
-                  docSnap.data()
-                );
-                set({ firestoreUser: docSnap.data() as FirestoreUserData });
-              } else {
-                // This case might happen if the Firestore document creation (e.g., by cloud function) is delayed
-                console.warn(
-                  `Firestore document for user ${finalUser.uid} does not exist yet.`
-                );
-                set({ firestoreUser: null });
-                // Consider fetching manually once after a short delay if the function is known to be slow
-              }
-              if (get().initializing) set({ initializing: false });
-            },
-            (error) => {
-              console.error(
-                `Firestore snapshot error for user ${finalUser.uid}:`,
-                error
-              );
-              set({ firestoreUser: null }); // Clear data on error
-              if (get().initializing) set({ initializing: false });
-            }
-          );
+          if (get().initializing) set({ initializing: false });
         } else {
           // User is signed out
           console.log("User signed out.");
-          set({ user: null, firestoreUser: null });
-          if (get().initializing) set({ initializing: false });
+          set({
+            user: null,
+            currentLanguageProgress: null,
+            initializing: false,
+          });
         }
       });
 
@@ -217,9 +317,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
       return () => {
         console.log("Cleaning up auth and Firestore listeners.");
         unsubscribeAuth();
-        if (unsubscribeFirestore) {
-          unsubscribeFirestore();
-        }
       };
     },
   };

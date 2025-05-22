@@ -52,6 +52,23 @@ export default function QuizContainer({
     setupQuiz();
   }, [letters]);
 
+  useEffect(() => {
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        updateUserXP(xpGained, language); // Side effect is okay here
+      }
+    } else {
+      console.log(`Quiz completed. No XP gained for language ${language}.`);
+    }
+  }, [quiz.quizCompleted]);
+
   // Select a random letter from the available letters
   const selectRandomLetter = () => {
     if (letters.length > 0)
@@ -102,10 +119,6 @@ export default function QuizContainer({
 
       if (nextQuestionNumber >= maxQuestions) {
         // --- Quiz Complete ---
-        // Calculate XP based on the score from the latest state (prevQuiz.score)
-        const xpGained = Math.floor((prevQuiz.score / maxQuestions) * 100);
-        updateUserXP(xpGained); // Side effect is okay here
-
         // Return final state
         return {
           ...prevQuiz,

@@ -42,15 +42,33 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
     answers: [],
   });
 
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
+
+  const [currentTarget, setCurrentTarget] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isQuestionTransitioning, setIsQuestionTransitioning] = useState(false);
+
   // Initialize the quiz when component mounts
   useEffect(() => {
     setupQuiz();
   }, [sentences]);
 
-  const [currentTarget, setCurrentTarget] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isQuestionTransitioning, setIsQuestionTransitioning] = useState(false);
-  const updateUserXP = useAuthStore((state) => state.updateUserXP);
+  useEffect(() => {
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        updateUserXP(xpGained, language); // Side effect is okay here
+      }
+    } else {
+      console.log(`Quiz completed. No XP gained for language ${language}.`);
+    }
+  }, [quiz.quizCompleted]);
 
   // Handler for when user submits an answer
   const handleAnswerSubmit = (selectedWord: string) => {
@@ -94,10 +112,6 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
 
       if (nextQuestionNumber >= maxQuestions) {
         // --- Quiz Complete ---
-        // Calculate XP based on the score from the latest state (prevQuiz.score)
-        const xpGained = Math.floor((prevQuiz.score / maxQuestions) * 100);
-        updateUserXP(xpGained); // Side effect is okay here
-
         // Return final state
         return {
           ...prevQuiz,
