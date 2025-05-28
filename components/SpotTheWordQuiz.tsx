@@ -4,17 +4,19 @@ import { ThemedText } from "./ThemedText";
 import { ThemedView } from "./ThemedView";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 
 import SelectableSentence from "./SelectableSentence";
 import LetterSoundButton from "./LetterSoundButton";
 import { playSound } from "@/utils/audioUtils";
 import { IconSymbol } from "./ui/IconSymbol";
 import { sentences } from "@/entities/sentences";
+import { useAuthStore } from "@/stores/authStore";
+import SpotTheWordQuizResults from "./SpotTheWordQuizResults";
 
 interface Props {
-  language: LanguageCode;
   maxQuestions?: number;
+  isScreenFocused: boolean;
 }
 
 type Quiz = {
@@ -28,7 +30,10 @@ type Quiz = {
   answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
-export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
+export default function SpotTheWordQuiz({
+  maxQuestions = 5,
+  isScreenFocused,
+}: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
     score: 0,
@@ -40,14 +45,66 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
     answers: [],
   });
 
-  // Initialize the quiz when component mounts
-  useEffect(() => {
-    setupQuiz();
-  }, [sentences]);
-
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
   const [currentTarget, setCurrentTarget] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isQuestionTransitioning, setIsQuestionTransitioning] = useState(false);
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
+
+  // Initialize the quiz when component mounts
+  useEffect(() => {
+    if (isScreenFocused) {
+      console.log(
+        `SpotTheWordQuiz: Effect for setupQuiz. Screen focused. Language: ${language}`
+      );
+      setupQuiz();
+    } else {
+      console.log(
+        `SpotTheWordQuiz: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
+      );
+    }
+  }, [sentences, isScreenFocused]);
+
+  useEffect(() => {
+    if (!isScreenFocused) {
+      console.log(
+        "SpotTheWordQuiz: XP update effect skipped, screen not focused."
+      );
+      return;
+    }
+
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        try {
+          updateUserXP(xpGained)
+            .then(() => {
+              console.log("User XP updated successfully.");
+            })
+            .catch((error) => {
+              console.error("Error updating user XP:", error);
+            });
+        } catch (error) {
+          console.error("Error updating user XP:", error);
+        }
+      }
+    } else {
+      console.log(`Quiz incompleted. Current score: ${quiz.score}`);
+    }
+  }, [
+    quiz.quizCompleted,
+    quiz.score,
+    maxQuestions,
+    updateUserXP,
+    language,
+    isScreenFocused,
+  ]);
 
   // Handler for when user submits an answer
   const handleAnswerSubmit = (selectedWord: string) => {
@@ -85,31 +142,56 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
   };
 
   const moveToNextQuestion = () => {
-    const nextQuestionNumber = quiz.currentQuestion + 1;
-    if (nextQuestionNumber >= maxQuestions) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        quizCompleted: true,
-        currentQuestion: nextQuestionNumber,
-        showFeedback: false,
-      }));
+    // Use functional update to ensure we operate on the latest state
+    setQuiz((prevQuiz) => {
+      const nextQuestionNumber = prevQuiz.currentQuestion + 1;
 
-      setIsQuestionTransitioning(false);
-    } else {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        showFeedback: false,
-        currentQuestion: nextQuestionNumber,
-      }));
+      if (nextQuestionNumber >= maxQuestions) {
+        // --- Quiz Complete ---
+        // Return final state
+        return {
+          ...prevQuiz,
+          quizCompleted: true,
+          showFeedback: false, // Ensure feedback is off on results screen
+          currentQuestion: nextQuestionNumber, // Update question number to maxQuestions
+        };
+      } else {
+        const newWord = selectRandomWord(
+          quiz.quizSentences[nextQuestionNumber]
+        );
 
-      selectRandomWord(quiz.quizSentences[nextQuestionNumber]);
-      setIsQuestionTransitioning(false);
-    }
+        if (isScreenFocused) {
+          console.log(
+            `SpotTheWordQuiz: Playing sound for next question: ${newWord}, lang: ${language}`
+          );
+          // Play the sound for the next question
+          playSound(newWord, language);
+        }
+
+        return {
+          ...prevQuiz,
+          currentQuestion: nextQuestionNumber,
+          showFeedback: false, // Hide feedback for the next question
+        };
+      }
+    });
+
+    setIsQuestionTransitioning(false);
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
+    if (!isScreenFocused && !isLoading) {
+      console.log(
+        "SpotTheWordQuiz: setupQuiz called, but screen not focused. Aborting setup."
+      );
+      return;
+    }
     setIsLoading(true);
-
+    console.log(
+      `SpotTheWordQuiz: setupQuiz initiated. Mode: ${
+        newMode || quiz.quizMode
+      }, Lang: ${language}`
+    );
     setTimeout(() => {
       const newSentences = createNewQuiz();
 
@@ -125,8 +207,18 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         answers: [],
       }));
 
-      selectRandomWord(newSentences[0]);
+      const newWord = selectRandomWord(newSentences[0]);
       setIsLoading(false);
+      console.log(
+        `SpotTheWordQuiz: Quiz setup complete. First letter: ${newWord}`
+      );
+      if (isScreenFocused) {
+        // Play sound only if screen is focused
+        console.log(
+          `SpotTheWordQuiz: Playing sound for first letter: ${newWord}, lang: ${language}`
+        );
+        playSound(newWord, language as LanguageCode);
+      }
     }, delay);
   };
 
@@ -146,11 +238,22 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
     const words = sentence.split(" ");
     const index = Math.floor(Math.random() * (words.length - 1));
     setCurrentTarget(words[index]);
+    return words[index];
   };
 
   const toggleQuizMode = () => {
     setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
+
+  if (!isScreenFocused && !quiz.quizCompleted) {
+    // If the screen is not focused and the quiz isn't completed (i.e., results aren't being shown)
+    // you might want to render nothing or a placeholder to prevent interaction with a non-focused quiz.
+    // This is optional and depends on desired UX.
+    console.log(
+      "SpotTheWordQuiz: Screen not focused, rendering minimal or null."
+    );
+    return null; // Or a lightweight placeholder
+  }
 
   if (isLoading) {
     return (
@@ -245,20 +348,16 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         </>
       )}
 
-      {quiz.quizCompleted && quiz.answers.length && (
-        <ThemedView style={styles.resultContainer}>
-          <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
-          <ThemedText style={styles.resultMode}>
-            Mode: {quiz.quizMode === "practice" ? "Practice" : "Test"}
-          </ThemedText>
-          <ThemedText style={styles.resultScore}>
-            Your score: {quiz.score} out of {maxQuestions}
-          </ThemedText>
-          <Pressable style={styles.resetButton} onPress={() => setupQuiz()}>
-            <ThemedText style={styles.resetButtonText}>Try Again</ThemedText>
-          </Pressable>
-        </ThemedView>
-      )}
+      {quiz.quizCompleted &&
+        quiz.answers.length === quiz.quizSentences.length && (
+          <SpotTheWordQuizResults
+            setupQuiz={setupQuiz}
+            quizMode={quiz.quizMode}
+            score={quiz.score}
+            maxQuestions={maxQuestions}
+            answers={quiz.answers}
+          />
+        )}
     </ThemedView>
   );
 }

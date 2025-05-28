@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { GestureResponderEvent, Pressable, StyleSheet } from "react-native";
 import Animated, { // Import Animated from 'react-native-reanimated'
   useAnimatedStyle,
@@ -6,15 +6,20 @@ import Animated, { // Import Animated from 'react-native-reanimated'
   withTiming,
 } from "react-native-reanimated";
 import { ThemedText } from "./ThemedText";
-import { useRouter } from "expo-router";
+import { Language } from "@/types/languages";
 
 interface Props {
-  buttonText: string;
+  language: Language;
+  setModalVisible: (visible: boolean) => void;
+  setLanguage: (language: Language) => void;
 }
 
-export default function AnimatedNavigationButton({ buttonText }: Props) {
+export default function ModalButton({
+  language,
+  setModalVisible,
+  setLanguage,
+}: Props) {
   const scaleValue = useSharedValue(1);
-  const router = useRouter();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.value }],
@@ -22,10 +27,8 @@ export default function AnimatedNavigationButton({ buttonText }: Props) {
 
   const handlePressIn = () => {
     scaleValue.value = withTiming(1.2, { duration: 200 });
-    // change the path to the desired screen
-    setTimeout(() => {
-      router.push(`/(main)/profile`);
-    }, 150);
+    setModalVisible(true);
+    setLanguage(language);
   };
 
   const handlePressOut = () => {
@@ -39,7 +42,7 @@ export default function AnimatedNavigationButton({ buttonText }: Props) {
         onPressOut={handlePressOut}
         style={[styles.button]}
       >
-        <ThemedText>{buttonText}</ThemedText>
+        <ThemedText>{language.name}</ThemedText>
       </Pressable>
     </Animated.View>
   );
@@ -56,6 +59,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%",
+    height: 50,
     alignItems: "center",
     justifyContent: "center",
   },

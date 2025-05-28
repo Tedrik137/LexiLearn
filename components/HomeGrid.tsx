@@ -1,31 +1,39 @@
 import React, { useState } from "react";
 import { ThemedView } from "./ThemedView";
-import { Pressable, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { ThemedText } from "./ThemedText";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
-import AnimatedNavigationButton from "./AnimatedNavigationButton";
-
-const languages = [
-  { id: 1, name: "English" },
-  { id: 2, name: "Spanish" },
-  { id: 3, name: "French" },
-  { id: 4, name: "Japanese" },
-];
+import ProficiencyModal from "./ProficiencyModal";
+import { languages } from "@/entities/languages";
+import { Language } from "@/types/languages";
+import LanguageModalOpenButton from "./LanguageModalOpenButton";
 
 export default function HomeGrid() {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [language, setLanguage] = useState<Language>(languages[0]);
+
+  if (modalVisible) {
+    return (
+      <ThemedView style={styles.columnContainer}>
+        <ProficiencyModal
+          visible={modalVisible}
+          setModalVisible={setModalVisible}
+          language={language}
+        />
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.columnContainer}>
       <ThemedText>Choose a language:</ThemedText>
       <ThemedView style={styles.container}>
         {languages.map((language) => (
-          <AnimatedNavigationButton
+          <LanguageModalOpenButton
+            setModalVisible={setModalVisible}
             key={language.id}
-            buttonText={language.name}
-          ></AnimatedNavigationButton>
+            language={language}
+            setLanguage={setLanguage}
+          ></LanguageModalOpenButton>
         ))}
       </ThemedView>
     </ThemedView>
@@ -46,5 +54,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     flex: 1,
+    rowGap: 20,
   },
 });

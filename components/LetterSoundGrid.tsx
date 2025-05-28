@@ -4,14 +4,14 @@ import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { IconSymbol } from "./ui/IconSymbol";
 import LetterSoundButton from "./LetterSoundButton";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { playSound } from "@/utils/audioUtils";
 import { Pressable } from "react-native";
 import { useState, useEffect } from "react";
+import { letters } from "@/entities/letters";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
-  letters: string[];
-  language: LanguageCode;
   targetLetter: string;
   onAnswerSubmit: (selectedLetter: string) => void;
   showFeedback: boolean;
@@ -21,8 +21,6 @@ interface Props {
 }
 
 export default function LetterSoundGrid({
-  letters,
-  language,
   targetLetter,
   onAnswerSubmit,
   showFeedback,
@@ -32,6 +30,8 @@ export default function LetterSoundGrid({
 }: Props) {
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
   const canPlayLetterSounds = quizMode === "practice";
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
+  const languageLetters = letters[language as LanguageCode] || [];
 
   useEffect(() => {
     setSelectedLetter(null);
@@ -70,7 +70,7 @@ export default function LetterSoundGrid({
       )}
 
       <ThemedView style={styles.container}>
-        {letters.map((letter) => (
+        {languageLetters.map((letter) => (
           <LetterSoundButton
             key={letter}
             onPress={() => handleSelect(letter)}

@@ -10,7 +10,7 @@ const Avatar = () => {
 
   return (
     <ThemedView style={styles.avatar}>
-      <IconSymbol name="person.fill" color={"white"} size={38} />
+      <IconSymbol name="person.fill" color={"#007AFF"} size={38} />
       {user && <ThemedText>{user?.displayName}</ThemedText>}
     </ThemedView>
   );
@@ -20,6 +20,8 @@ const styles = StyleSheet.create({
   avatar: {
     marginLeft: 10,
     backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

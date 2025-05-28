@@ -5,14 +5,15 @@ import PictureButtonGrid from "./PictureButtonGrid";
 import { ThemedView } from "./ThemedView";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { wordPictureTypes } from "@/entities/wordPictureTypes";
 import PictureQuizImage from "./PictureQuizImage";
-import QuizResults from "./PictureQuizResults";
+import PictureQuizResults from "./PictureQuizResults";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
-  language: LanguageCode;
   maxQuestions?: number;
+  isScreenFocused: boolean; // Optional prop to control focus behavior
 }
 
 type Quiz = {
@@ -26,7 +27,10 @@ type Quiz = {
   answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
-export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
+export default function PictureQuiz({
+  maxQuestions = 5,
+  isScreenFocused,
+}: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
     score: 0,
@@ -41,13 +45,62 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
     wordPictureTypes[0]
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
   const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
 
   // Initialize the quiz when component mounts
   useEffect(() => {
-    setupQuiz();
-  }, [wordPictureTypes]);
+    if (isScreenFocused) {
+      console.log(
+        `PictureQuiz: Effect for setupQuiz. Screen focused. Language: ${language}`
+      );
+      setupQuiz();
+    } else {
+      console.log(
+        `PictureQuiz: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
+      );
+    }
+  }, [wordPictureTypes, isScreenFocused]);
+
+  useEffect(() => {
+    if (!isScreenFocused) {
+      console.log("PictureQuiz: XP update effect skipped, screen not focused.");
+      return;
+    }
+
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        try {
+          updateUserXP(xpGained)
+            .then(() => {
+              console.log("User XP updated successfully.");
+            })
+            .catch((error) => {
+              console.error("Error updating user XP:", error);
+            });
+        } catch (error) {
+          console.error("Error updating user XP:", error);
+        }
+      }
+    } else {
+      console.log(`Quiz incompleted. Current score: ${quiz.score}`);
+    }
+  }, [
+    quiz.quizCompleted,
+    quiz.score,
+    maxQuestions,
+    updateUserXP,
+    language,
+    isScreenFocused,
+  ]);
 
   // select random word,image pair as current question
   const selectRandomTarget = () => {
@@ -97,12 +150,16 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
   const moveToNextQuestion = () => {
     const nextQuestionNumber = quiz.currentQuestion + 1;
     if (nextQuestionNumber >= maxQuestions) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        quizCompleted: true,
-        currentQuestion: nextQuestionNumber,
-        showFeedback: false,
-      }));
+      // Use functional update to ensure score is latest
+      setQuiz((prevQuiz) => {
+        // Return the final state
+        return {
+          ...prevQuiz,
+          quizCompleted: true,
+          currentQuestion: nextQuestionNumber, // Mark completion
+          showFeedback: false, // Ensure feedback is off
+        };
+      });
     } else {
       const nextTarget = quiz.quizWordPictures[nextQuestionNumber];
 
@@ -116,18 +173,35 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       setCurrentTarget(nextTarget);
 
       setTimeout(() => {
-        setQuiz((prevQuiz) => ({
-          ...prevQuiz,
-          currentQuestion: nextQuestionNumber,
-        }));
-        setIsImageLoading(false);
+        setQuiz((prevQuiz) => {
+          if (isScreenFocused) {
+            console.log(`PictureQuiz: Loading next picture `);
+            // Play the sound for the next question
+            setIsImageLoading(false);
+          }
+          return {
+            ...prevQuiz,
+            currentQuestion: nextQuestionNumber,
+          };
+        });
       }, 100); // Delay ensures the transition looks smooth
     }
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
+    if (!isScreenFocused && !isLoading) {
+      console.log(
+        "PictureQuiz: setupQuiz called, but screen not focused. Aborting setup."
+      );
+      return;
+    }
     setIsLoading(true);
     setIsImageLoading(true);
+    console.log(
+      `PictureQuiz: setupQuiz initiated. Mode: ${
+        newMode || quiz.quizMode
+      }, Lang: ${language}`
+    );
 
     setTimeout(() => {
       const newPictureWords = createNewQuiz();
@@ -147,12 +221,24 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
       setCurrentTarget(newPictureWords[0]);
       setIsLoading(false);
       setIsImageLoading(false);
+
+      console.log(
+        `PictureQuiz: Quiz setup complete. First picture: ${newPictureWords[0]}`
+      );
     }, delay);
   };
 
   const toggleQuizMode = () => {
     setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
+
+  if (!isScreenFocused && !quiz.quizCompleted) {
+    // If the screen is not focused and the quiz isn't completed (i.e., results aren't being shown)
+    // you might want to render nothing or a placeholder to prevent interaction with a non-focused quiz.
+    // This is optional and depends on desired UX.
+    console.log("PictureQuiz: Screen not focused, rendering minimal or null.");
+    return null; // Or a lightweight placeholder
+  }
 
   if (isLoading) {
     return (
@@ -236,7 +322,7 @@ export default function PictureQuiz({ language, maxQuestions = 5 }: Props) {
 
       {quiz.quizCompleted &&
         quiz.quizWordPictures.length === quiz.answers.length && (
-          <QuizResults
+          <PictureQuizResults
             setupQuiz={setupQuiz}
             maxQuestions={maxQuestions}
             quizMode={quiz.quizMode}

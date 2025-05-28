@@ -6,13 +6,15 @@ import { ThemedText } from "./ThemedText";
 import { Pressable } from "react-native";
 import QuizProgressBar from "./QuizProgressBar";
 import LetterSoundGrid from "./LetterSoundGrid";
-import { LanguageCode } from "@/types/soundTypes";
+import { LanguageCode } from "@/types/languages";
 import { playSound } from "@/utils/audioUtils";
+import { useAuthStore } from "@/stores/authStore";
+import QuizResults from "./QuizResults";
+import { letters } from "@/entities/letters";
 
 interface Props {
-  letters: string[];
-  language: LanguageCode;
   maxQuestions?: number;
+  isScreenFocused: boolean;
 }
 
 type Quiz = {
@@ -23,12 +25,12 @@ type Quiz = {
   showFeedback: boolean;
   lastAnswerCorrect: boolean;
   quizLetters: string[];
+  answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
 export default function QuizContainer({
-  letters,
-  language,
   maxQuestions = 5,
+  isScreenFocused,
 }: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
@@ -38,19 +40,76 @@ export default function QuizContainer({
     showFeedback: false,
     lastAnswerCorrect: false,
     quizLetters: [],
+    answers: [],
   });
+
   const [currentTargetLetter, setCurrentTargetLetter] = useState<string>("a");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
+  const languageLetters = letters[language as LanguageCode] || [];
 
   // Initialize the quiz when component mounts
   useEffect(() => {
-    setupQuiz();
-  }, [letters]);
+    if (isScreenFocused) {
+      console.log(
+        `QuizContainer: Effect for setupQuiz. Screen focused. Language: ${language}`
+      );
+      setupQuiz();
+    } else {
+      console.log(
+        `QuizContainer: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
+      );
+    }
+  }, [letters, isScreenFocused]);
+
+  useEffect(() => {
+    if (!isScreenFocused) {
+      console.log(
+        "QuizContainer: XP update effect skipped, screen not focused."
+      );
+      return;
+    }
+
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        try {
+          updateUserXP(xpGained)
+            .then(() => {
+              console.log("User XP updated successfully.");
+            })
+            .catch((error) => {
+              console.error("Error updating user XP:", error);
+            });
+        } catch (error) {
+          console.error("Error updating user XP:", error);
+        }
+      }
+    } else {
+      console.log(`Quiz incomplete. Current score: ${quiz.score}`);
+    }
+  }, [
+    quiz.quizCompleted,
+    quiz.score,
+    language,
+    maxQuestions,
+    updateUserXP,
+    isScreenFocused,
+  ]);
 
   // Select a random letter from the available letters
   const selectRandomLetter = () => {
-    if (letters.length > 0)
-      return letters[Math.floor(Math.random() * letters.length)];
+    if (languageLetters.length > 0)
+      return languageLetters[
+        Math.floor(Math.random() * languageLetters.length)
+      ];
     return "a";
   };
 
@@ -62,21 +121,24 @@ export default function QuizContainer({
   const handleAnswerSubmit = (selectedLetter: string) => {
     // Check if the answer is correct
     const isCorrect = selectedLetter === currentTargetLetter;
-    if (isCorrect) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        score: prevQuiz.score + 1,
-      }));
-    }
+    // Queue state updates for score and feedback
+    setQuiz((prevQuiz) => ({
+      ...prevQuiz,
+      score: isCorrect ? prevQuiz.score + 1 : prevQuiz.score,
+      lastAnswerCorrect: isCorrect,
+      // Show feedback immediately only in practice mode
+      showFeedback: prevQuiz.quizMode === "practice",
+      answers: [
+        ...prevQuiz.answers,
+        {
+          question: currentTargetLetter,
+          userAnswer: selectedLetter,
+          correct: isCorrect,
+        },
+      ],
+    }));
 
     if (quiz.quizMode === "practice") {
-      // Show feedback in practice mode
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        lastAnswerCorrect: isCorrect,
-        showFeedback: true,
-      }));
-
       // Move to next question after a delay
       setTimeout(() => {
         moveToNextQuestion();
@@ -88,30 +150,53 @@ export default function QuizContainer({
   };
 
   const moveToNextQuestion = () => {
-    const nextQuestionNumber = quiz.currentQuestion + 1;
+    // Use functional update to ensure we operate on the latest state
+    setQuiz((prevQuiz) => {
+      const nextQuestionNumber = prevQuiz.currentQuestion + 1;
 
-    if (nextQuestionNumber >= maxQuestions) {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        quizCompleted: true,
-        showFeedback: false,
-      }));
-    } else {
-      setQuiz((prevQuiz) => ({
-        ...prevQuiz,
-        currentQuestion: nextQuestionNumber,
-        showFeedback: false,
-      }));
-      const nextTargetLetter = quiz.quizLetters[nextQuestionNumber];
-      setCurrentTargetLetter(nextTargetLetter);
+      if (nextQuestionNumber >= maxQuestions) {
+        // --- Quiz Complete ---
+        // Return final state
+        return {
+          ...prevQuiz,
+          quizCompleted: true,
+          showFeedback: false, // Ensure feedback is off on results screen
+          currentQuestion: nextQuestionNumber, // Update question number to maxQuestions
+        };
+      } else {
+        const nextTargetLetter = quiz.quizLetters[nextQuestionNumber];
+        setCurrentTargetLetter(nextTargetLetter);
 
-      // Play the sound for the next question
-      playSound(nextTargetLetter, language);
-    }
+        if (isScreenFocused) {
+          console.log(
+            `QuizContainer: Playing sound for next question: ${nextTargetLetter}, lang: ${language}`
+          );
+          // Play the sound for the next question
+          playSound(nextTargetLetter, language);
+        }
+
+        return {
+          ...prevQuiz,
+          currentQuestion: nextQuestionNumber,
+          showFeedback: false, // Hide feedback for the next question
+        };
+      }
+    });
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
+    if (!isScreenFocused && !isLoading) {
+      console.log(
+        "QuizContainer: setupQuiz called, but screen not focused. Aborting setup."
+      );
+      return;
+    }
     setIsLoading(true);
+    console.log(
+      `QuizContainer: setupQuiz initiated. Mode: ${
+        newMode || quiz.quizMode
+      }, Lang: ${language}`
+    );
 
     setTimeout(() => {
       const newLetters = createNewQuiz();
@@ -125,23 +210,38 @@ export default function QuizContainer({
         lastAnswerCorrect: false,
         quizCompleted: false,
         quizLetters: newLetters,
+        answers: [],
       }));
 
       setCurrentTargetLetter(newLetters[0]);
       setIsLoading(false);
+      console.log(
+        `QuizContainer: Quiz setup complete. First letter: ${newLetters[0]}`
+      );
 
-      // Play the sound after the quiz is set up
-      playSound(newLetters[0], language);
+      if (isScreenFocused) {
+        // Play sound only if screen is focused
+        console.log(
+          `QuizContainer: Playing sound for first letter: ${newLetters[0]}, lang: ${language}`
+        );
+        playSound(newLetters[0], language as LanguageCode);
+      }
     }, delay);
-  };
-
-  const resetQuiz = () => {
-    setupQuiz();
   };
 
   const toggleQuizMode = () => {
     setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
+
+  if (!isScreenFocused && !quiz.quizCompleted) {
+    // If the screen is not focused and the quiz isn't completed (i.e., results aren't being shown)
+    // you might want to render nothing or a placeholder to prevent interaction with a non-focused quiz.
+    // This is optional and depends on desired UX.
+    console.log(
+      "QuizContainer: Screen not focused, rendering minimal or null."
+    );
+    return null; // Or a lightweight placeholder
+  }
 
   if (isLoading) {
     return (
@@ -163,45 +263,46 @@ export default function QuizContainer({
         currentStep={quiz.currentQuestion}
         marginTop={10}
       />
-      <ThemedView style={styles.modeToggleContainer}>
-        <Pressable
-          style={[
-            styles.modeButton,
-            quiz.quizMode === "practice" && styles.activeMode,
-          ]}
-          onPress={() => quiz.quizMode !== "practice" && toggleQuizMode()}
-        >
-          <ThemedText style={styles.modeButtonText}>Practice Mode</ThemedText>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.modeButton,
-            quiz.quizMode === "test" && styles.activeMode,
-          ]}
-          onPress={() => quiz.quizMode !== "test" && toggleQuizMode()}
-        >
-          <ThemedText style={styles.modeButtonText}>Test Mode</ThemedText>
-        </Pressable>
-      </ThemedView>
-      {quiz.quizMode === "practice" && (
-        <ThemedText style={styles.modeDescription}>
-          Practice Mode: Learn the letter sounds by playing each one. Feedback
-          will be shown after each answer.
-        </ThemedText>
-      )}
-
-      {quiz.quizMode === "test" && (
-        <ThemedText style={styles.modeDescription}>
-          Test Mode: Test your knowledge! You can only hear the target sound,
-          not individual letters.
-        </ThemedText>
-      )}
-
-      {!quiz.quizCompleted ? (
+      {!quiz.quizCompleted && (
         <>
+          <ThemedView style={styles.modeToggleContainer}>
+            <Pressable
+              style={[
+                styles.modeButton,
+                quiz.quizMode === "practice" && styles.activeMode,
+              ]}
+              onPress={() => quiz.quizMode !== "practice" && toggleQuizMode()}
+            >
+              <ThemedText style={styles.modeButtonText}>
+                Practice Mode
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modeButton,
+                quiz.quizMode === "test" && styles.activeMode,
+              ]}
+              onPress={() => quiz.quizMode !== "test" && toggleQuizMode()}
+            >
+              <ThemedText style={styles.modeButtonText}>Test Mode</ThemedText>
+            </Pressable>
+          </ThemedView>
+
+          {quiz.quizMode === "practice" && (
+            <ThemedText style={styles.modeDescription}>
+              Practice Mode: Learn the letter sounds by playing each one.
+              Feedback will be shown after each answer.
+            </ThemedText>
+          )}
+
+          {quiz.quizMode === "test" && (
+            <ThemedText style={styles.modeDescription}>
+              Test Mode: Test your knowledge! You can only hear the target
+              sound, not individual letters.
+            </ThemedText>
+          )}
+
           <LetterSoundGrid
-            letters={letters}
-            language={language}
             targetLetter={currentTargetLetter}
             onAnswerSubmit={handleAnswerSubmit}
             quizMode={quiz.quizMode}
@@ -210,20 +311,19 @@ export default function QuizContainer({
             currentQuestion={quiz.currentQuestion}
           />
         </>
-      ) : (
-        <ThemedView style={styles.resultContainer}>
-          <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
-          <ThemedText style={styles.resultMode}>
-            Mode: {quiz.quizMode === "practice" ? "Practice" : "Test"}
-          </ThemedText>
-          <ThemedText style={styles.resultScore}>
-            Your score: {quiz.score} out of {maxQuestions}
-          </ThemedText>
-          <Pressable style={styles.resetButton} onPress={resetQuiz}>
-            <ThemedText style={styles.resetButtonText}>Try Again</ThemedText>
-          </Pressable>
-        </ThemedView>
       )}
+
+      {quiz.quizCompleted &&
+        quiz.quizLetters.length === quiz.answers.length && (
+          <QuizResults
+            setupQuiz={setupQuiz}
+            maxQuestions={maxQuestions}
+            quizMode={quiz.quizMode}
+            score={quiz.score}
+            quizLetters={quiz.quizLetters}
+            answers={quiz.answers}
+          />
+        )}
     </ThemedView>
   );
 }
