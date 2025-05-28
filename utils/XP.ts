@@ -3,6 +3,10 @@ export const requiredXP = (level: number) => {
 };
 
 export const checkLevelUp = (xp: number, level: number) => {
+  console.log(
+    `checkLevelUp: Input totalPotentialXP=${xp}, currentLevel=${level}`
+  );
+
   let reqXP = requiredXP(level);
 
   while (xp >= reqXP) {
@@ -10,6 +14,12 @@ export const checkLevelUp = (xp: number, level: number) => {
     level++;
     reqXP = Math.floor(reqXP * 1.25);
   }
+  const newCalculatedLevel = level;
+  const xpForNewLevel = xp; // This should be the XP *within* the new level, or total XP depending on your system
 
-  return { level, xp };
+  console.log(
+    `checkLevelUp: Output newLevel=${newCalculatedLevel}, xp=${xpForNewLevel}`
+  );
+
+  return { level: newCalculatedLevel, xp: xpForNewLevel };
 };

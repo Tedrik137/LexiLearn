@@ -4,8 +4,8 @@ import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useAuthStore } from "@/stores/authStore";
 import { LanguageCode } from "@/types/languages";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { stringToBytes } from "uuid/dist/cjs/v35";
 
@@ -19,12 +19,13 @@ export default function LanguageQuizzes() {
     (state) => state.setSelectedLanguage
   );
 
-  useEffect(() => {
-    // Set the selected language in the auth store
-    if (language) {
-      setSelectedLanguage(language as LanguageCode);
-    }
-  }, [language, setSelectedLanguage]);
+  useFocusEffect(
+    useCallback(() => {
+      if (language) {
+        setSelectedLanguage(language as LanguageCode);
+      }
+    }, [language, setSelectedLanguage])
+  );
 
   if (!language) {
     return (

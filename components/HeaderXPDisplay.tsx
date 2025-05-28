@@ -8,18 +8,12 @@ import { LanguageCode } from "@/types/languages";
 import { ActivityIndicator } from "react-native";
 
 export default function HeaderXPDisplay() {
-  const {
-    user,
-    currentLanguageProgress,
-    selectedLanguage,
-    loading: authLoading,
-  } = useAuthStore(
-    useShallow((state) => ({
-      user: state.user,
-      currentLanguageProgress: state.currentLanguageProgress,
-      selectedLanguage: state.selectedLanguage,
-      loading: state.initializing || state.loading,
-    }))
+  const currentLanguageProgress = useAuthStore(
+    (state) => state.currentLanguageProgress
+  );
+  const selectedLanguage = useAuthStore((state) => state.selectedLanguage);
+  const authLoading = useAuthStore(
+    (state) => state.initializing || state.loading
   );
 
   if (!selectedLanguage) {

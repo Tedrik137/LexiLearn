@@ -50,7 +50,7 @@ interface AuthState {
   signOut: () => Promise<{ success: boolean; error?: string }>;
 
   // Firestore operations
-  updateUserXP: (xpGained: number, languageCode: LanguageCode) => Promise<void>; // Action to update XP
+  updateUserXP: (xpGained: number) => Promise<void>; // Action to update XP
 
   fetchUserLanguageProgress: (languageCode: LanguageCode) => Promise<void>; // Action to fetch user language progress
 
@@ -136,16 +136,29 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     // Firestore operations
-    updateUserXP: async (xpGained: number, languageCode: LanguageCode) => {
+    updateUserXP: async (xpGained: number) => {
+      console.log(`authStore.updateUserXP: Called with xpGained=${xpGained}`);
       const uid = get().user?.uid;
+      const languageCode = get().selectedLanguage;
+
       if (!uid) {
         console.error("Cannot update XP: User not logged in.");
         return;
       }
+
+      if (!languageCode) {
+        console.error("Cannot update XP: Language not selected.");
+        return;
+      }
+
       if (xpGained <= 0) {
         console.log("No XP gained for language: ", languageCode);
         return;
       }
+
+      console.log(
+        `authStore.updateUserXP: Processing for uid=${uid}, lang=${languageCode}`
+      );
 
       const progressColRef = collection(firestore, "userLanguageProgress");
       const q = query(
@@ -159,10 +172,16 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       try {
         // check if the user leveled up
+        console.log(
+          `authStore.updateUserXP: Attempting to get existing progress for ${languageCode}`
+        );
         const querySnapshot = await getDocs(q);
+        console.log(
+          `authStore.updateUserXP: querySnapshot.empty=${querySnapshot.empty} for ${languageCode}`
+        );
 
         let currentXP = 0;
-        let currentLevel = 0;
+        let currentLevel = 1;
         let docRef;
         let isNewDoc = false;
 
@@ -170,17 +189,32 @@ export const useAuthStore = create<AuthState>((set, get) => {
           // If no document exists, create a new one
           docRef = doc(progressColRef);
           isNewDoc = true;
+          console.log(
+            `authStore.updateUserXP: No existing doc for ${languageCode}. currentXP=${currentXP}, currentLevel=${currentLevel}. New docRef ID: ${docRef.id}`
+          );
         } else {
           // If document exists, get the reference
           const progressDoc = querySnapshot.docs[0];
           docRef = progressDoc.ref;
           currentXP = progressDoc.data().xp || 0;
           currentLevel = progressDoc.data().level || 1;
+          console.log(
+            `authStore.updateUserXP: Existing doc found for ${languageCode}. currentXP=${currentXP}, currentLevel=${currentLevel}. Doc ID: ${docRef.id}`
+          );
         }
+
+        console.log(
+          `authStore.updateUserXP: Calling checkLevelUp with currentXP=${
+            currentXP + xpGained
+          }, currentLevel=${currentLevel} for ${languageCode}`
+        );
 
         const { level: newLevel, xp: newXP } = checkLevelUp(
           currentXP + xpGained,
           currentLevel
+        );
+        console.log(
+          `authStore.updateUserXP: checkLevelUp result for ${languageCode}: newXP=${newXP}, newLevel=${newLevel}`
         );
 
         const progressData = {
@@ -191,12 +225,25 @@ export const useAuthStore = create<AuthState>((set, get) => {
           lastUpdated: serverTimestamp(),
         };
 
+        console.log(
+          `authStore.updateUserXP: Progress data to write for ${languageCode}:`,
+          progressData
+        );
+
         if (isNewDoc) {
+          console.log(
+            `authStore.updateUserXP: Attempting setDoc for new document for ${languageCode}`
+          );
+
           await setDoc(docRef, progressData);
           console.log(
             `Initial XP set for user ${uid}, language ${languageCode}. New XP: ${newXP}, New Level: ${newLevel}`
           );
         } else {
+          console.log(
+            `authStore.updateUserXP: Attempting updateDoc for existing document for ${languageCode}`
+          );
+
           await updateDoc(docRef, progressData);
           console.log(
             `XP updated by ${xpGained} for user ${uid}, language ${languageCode}. New XP: ${newXP}, New Level: ${newLevel}`

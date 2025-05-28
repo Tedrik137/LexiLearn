@@ -10,11 +10,11 @@ import { LanguageCode } from "@/types/languages";
 import { playSound } from "@/utils/audioUtils";
 import { useAuthStore } from "@/stores/authStore";
 import QuizResults from "./QuizResults";
+import { letters } from "@/entities/letters";
 
 interface Props {
-  letters: string[];
-  language: LanguageCode;
   maxQuestions?: number;
+  isScreenFocused: boolean;
 }
 
 type Quiz = {
@@ -29,9 +29,8 @@ type Quiz = {
 };
 
 export default function QuizContainer({
-  letters,
-  language,
   maxQuestions = 5,
+  isScreenFocused,
 }: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
@@ -43,16 +42,35 @@ export default function QuizContainer({
     quizLetters: [],
     answers: [],
   });
+
   const [currentTargetLetter, setCurrentTargetLetter] = useState<string>("a");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const updateUserXP = useAuthStore((state) => state.updateUserXP);
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
+  const languageLetters = letters[language as LanguageCode] || [];
 
   // Initialize the quiz when component mounts
   useEffect(() => {
-    setupQuiz();
-  }, [letters]);
+    if (isScreenFocused) {
+      console.log(
+        `QuizContainer: Effect for setupQuiz. Screen focused. Language: ${language}`
+      );
+      setupQuiz();
+    } else {
+      console.log(
+        `QuizContainer: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
+      );
+    }
+  }, [letters, isScreenFocused]);
 
   useEffect(() => {
+    if (!isScreenFocused) {
+      console.log(
+        "QuizContainer: XP update effect skipped, screen not focused."
+      );
+      return;
+    }
+
     if (quiz.quizCompleted) {
       // Update user XP when the quiz is completed
       // Calculate XP based on the score from the latest state (prevQuiz.score)
@@ -62,17 +80,36 @@ export default function QuizContainer({
         console.log(
           `Quiz completed. Gained ${xpGained} XP for language ${language}.`
         );
-        updateUserXP(xpGained, language); // Side effect is okay here
+        try {
+          updateUserXP(xpGained)
+            .then(() => {
+              console.log("User XP updated successfully.");
+            })
+            .catch((error) => {
+              console.error("Error updating user XP:", error);
+            });
+        } catch (error) {
+          console.error("Error updating user XP:", error);
+        }
       }
     } else {
-      console.log(`Quiz completed. No XP gained for language ${language}.`);
+      console.log(`Quiz incomplete. Current score: ${quiz.score}`);
     }
-  }, [quiz.quizCompleted]);
+  }, [
+    quiz.quizCompleted,
+    quiz.score,
+    language,
+    maxQuestions,
+    updateUserXP,
+    isScreenFocused,
+  ]);
 
   // Select a random letter from the available letters
   const selectRandomLetter = () => {
-    if (letters.length > 0)
-      return letters[Math.floor(Math.random() * letters.length)];
+    if (languageLetters.length > 0)
+      return languageLetters[
+        Math.floor(Math.random() * languageLetters.length)
+      ];
     return "a";
   };
 
@@ -130,8 +167,14 @@ export default function QuizContainer({
         const nextTargetLetter = quiz.quizLetters[nextQuestionNumber];
         setCurrentTargetLetter(nextTargetLetter);
 
-        // Play the sound for the next question
-        playSound(nextTargetLetter, language);
+        if (isScreenFocused) {
+          console.log(
+            `QuizContainer: Playing sound for next question: ${nextTargetLetter}, lang: ${language}`
+          );
+          // Play the sound for the next question
+          playSound(nextTargetLetter, language);
+        }
+
         return {
           ...prevQuiz,
           currentQuestion: nextQuestionNumber,
@@ -142,7 +185,18 @@ export default function QuizContainer({
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
+    if (!isScreenFocused && !isLoading) {
+      console.log(
+        "QuizContainer: setupQuiz called, but screen not focused. Aborting setup."
+      );
+      return;
+    }
     setIsLoading(true);
+    console.log(
+      `QuizContainer: setupQuiz initiated. Mode: ${
+        newMode || quiz.quizMode
+      }, Lang: ${language}`
+    );
 
     setTimeout(() => {
       const newLetters = createNewQuiz();
@@ -161,15 +215,33 @@ export default function QuizContainer({
 
       setCurrentTargetLetter(newLetters[0]);
       setIsLoading(false);
+      console.log(
+        `QuizContainer: Quiz setup complete. First letter: ${newLetters[0]}`
+      );
 
-      // Play the sound after the quiz is set up
-      playSound(newLetters[0], language);
+      if (isScreenFocused) {
+        // Play sound only if screen is focused
+        console.log(
+          `QuizContainer: Playing sound for first letter: ${newLetters[0]}, lang: ${language}`
+        );
+        playSound(newLetters[0], language as LanguageCode);
+      }
     }, delay);
   };
 
   const toggleQuizMode = () => {
     setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
+
+  if (!isScreenFocused && !quiz.quizCompleted) {
+    // If the screen is not focused and the quiz isn't completed (i.e., results aren't being shown)
+    // you might want to render nothing or a placeholder to prevent interaction with a non-focused quiz.
+    // This is optional and depends on desired UX.
+    console.log(
+      "QuizContainer: Screen not focused, rendering minimal or null."
+    );
+    return null; // Or a lightweight placeholder
+  }
 
   if (isLoading) {
     return (
@@ -231,8 +303,6 @@ export default function QuizContainer({
           )}
 
           <LetterSoundGrid
-            letters={letters}
-            language={language}
             targetLetter={currentTargetLetter}
             onAnswerSubmit={handleAnswerSubmit}
             quizMode={quiz.quizMode}

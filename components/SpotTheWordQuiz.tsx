@@ -15,8 +15,8 @@ import { useAuthStore } from "@/stores/authStore";
 import SpotTheWordQuizResults from "./SpotTheWordQuizResults";
 
 interface Props {
-  language: LanguageCode;
   maxQuestions?: number;
+  isScreenFocused: boolean;
 }
 
 type Quiz = {
@@ -30,7 +30,10 @@ type Quiz = {
   answers: { question: string; userAnswer: string; correct: boolean }[];
 };
 
-export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
+export default function SpotTheWordQuiz({
+  maxQuestions = 5,
+  isScreenFocused,
+}: Props) {
   const [quiz, setQuiz] = useState<Quiz>({
     currentQuestion: 0,
     score: 0,
@@ -43,17 +46,33 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
   });
 
   const updateUserXP = useAuthStore((state) => state.updateUserXP);
-
   const [currentTarget, setCurrentTarget] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isQuestionTransitioning, setIsQuestionTransitioning] = useState(false);
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
 
   // Initialize the quiz when component mounts
   useEffect(() => {
-    setupQuiz();
-  }, [sentences]);
+    if (isScreenFocused) {
+      console.log(
+        `SpotTheWordQuiz: Effect for setupQuiz. Screen focused. Language: ${language}`
+      );
+      setupQuiz();
+    } else {
+      console.log(
+        `SpotTheWordQuiz: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
+      );
+    }
+  }, [sentences, isScreenFocused]);
 
   useEffect(() => {
+    if (!isScreenFocused) {
+      console.log(
+        "SpotTheWordQuiz: XP update effect skipped, screen not focused."
+      );
+      return;
+    }
+
     if (quiz.quizCompleted) {
       // Update user XP when the quiz is completed
       // Calculate XP based on the score from the latest state (prevQuiz.score)
@@ -63,12 +82,29 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         console.log(
           `Quiz completed. Gained ${xpGained} XP for language ${language}.`
         );
-        updateUserXP(xpGained, language); // Side effect is okay here
+        try {
+          updateUserXP(xpGained)
+            .then(() => {
+              console.log("User XP updated successfully.");
+            })
+            .catch((error) => {
+              console.error("Error updating user XP:", error);
+            });
+        } catch (error) {
+          console.error("Error updating user XP:", error);
+        }
       }
     } else {
-      console.log(`Quiz completed. No XP gained for language ${language}.`);
+      console.log(`Quiz incompleted. Current score: ${quiz.score}`);
     }
-  }, [quiz.quizCompleted]);
+  }, [
+    quiz.quizCompleted,
+    quiz.score,
+    maxQuestions,
+    updateUserXP,
+    language,
+    isScreenFocused,
+  ]);
 
   // Handler for when user submits an answer
   const handleAnswerSubmit = (selectedWord: string) => {
@@ -120,8 +156,17 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
           currentQuestion: nextQuestionNumber, // Update question number to maxQuestions
         };
       } else {
-        selectRandomWord(quiz.quizSentences[nextQuestionNumber]);
-        setIsQuestionTransitioning(false);
+        const newWord = selectRandomWord(
+          quiz.quizSentences[nextQuestionNumber]
+        );
+
+        if (isScreenFocused) {
+          console.log(
+            `SpotTheWordQuiz: Playing sound for next question: ${newWord}, lang: ${language}`
+          );
+          // Play the sound for the next question
+          playSound(newWord, language);
+        }
 
         return {
           ...prevQuiz,
@@ -130,11 +175,23 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         };
       }
     });
+
+    setIsQuestionTransitioning(false);
   };
 
   const setupQuiz = (newMode?: string, delay = 0) => {
+    if (!isScreenFocused && !isLoading) {
+      console.log(
+        "SpotTheWordQuiz: setupQuiz called, but screen not focused. Aborting setup."
+      );
+      return;
+    }
     setIsLoading(true);
-
+    console.log(
+      `SpotTheWordQuiz: setupQuiz initiated. Mode: ${
+        newMode || quiz.quizMode
+      }, Lang: ${language}`
+    );
     setTimeout(() => {
       const newSentences = createNewQuiz();
 
@@ -150,8 +207,18 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
         answers: [],
       }));
 
-      selectRandomWord(newSentences[0]);
+      const newWord = selectRandomWord(newSentences[0]);
       setIsLoading(false);
+      console.log(
+        `SpotTheWordQuiz: Quiz setup complete. First letter: ${newWord}`
+      );
+      if (isScreenFocused) {
+        // Play sound only if screen is focused
+        console.log(
+          `SpotTheWordQuiz: Playing sound for first letter: ${newWord}, lang: ${language}`
+        );
+        playSound(newWord, language as LanguageCode);
+      }
     }, delay);
   };
 
@@ -171,11 +238,22 @@ export default function SpotTheWordQuiz({ language, maxQuestions = 5 }: Props) {
     const words = sentence.split(" ");
     const index = Math.floor(Math.random() * (words.length - 1));
     setCurrentTarget(words[index]);
+    return words[index];
   };
 
   const toggleQuizMode = () => {
     setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
+
+  if (!isScreenFocused && !quiz.quizCompleted) {
+    // If the screen is not focused and the quiz isn't completed (i.e., results aren't being shown)
+    // you might want to render nothing or a placeholder to prevent interaction with a non-focused quiz.
+    // This is optional and depends on desired UX.
+    console.log(
+      "SpotTheWordQuiz: Screen not focused, rendering minimal or null."
+    );
+    return null; // Or a lightweight placeholder
+  }
 
   if (isLoading) {
     return (

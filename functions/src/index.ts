@@ -17,10 +17,8 @@ export const initializeUserData = functions.auth
         uid: uid,
         displayName: user.displayName || "",
         createdAt: FieldValue.serverTimestamp(),
-        xp: 0,
         currentStreak: 0,
         currentStreakStart: FieldValue.serverTimestamp(),
-        level: 1,
       });
       logger.info(`Successfully initialized data for user: ${uid}`);
     } catch (error) {

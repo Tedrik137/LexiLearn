@@ -1,5 +1,5 @@
 import CustomScrollView from "@/components/CustomScrollView";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
 import QuizCointainer from "@/components/QuizContainer";
 import { letters } from "@/entities/letters";
@@ -8,7 +8,8 @@ import { ThemedText } from "@/components/ThemedText"; // Import ThemedText for e
 import PictureQuiz from "@/components/PictureQuiz";
 import SpotTheWordQuiz from "@/components/SpotTheWordQuiz";
 import { useAuthStore } from "@/stores/authStore";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function LanguageQuiz() {
   let { proficiency, language, quiz } = useLocalSearchParams();
@@ -16,28 +17,31 @@ export default function LanguageQuiz() {
   const setSelectedLanguage = useAuthStore(
     (state) => state.setSelectedLanguage
   );
+  const selectedLanguage = useAuthStore((state) => state.selectedLanguage);
+  const isFocused = useIsFocused();
 
-  useEffect(() => {
-    // Set the selected language in the auth store
-    if (language) {
-      setSelectedLanguage(language as LanguageCode);
-    }
-  }, [language, setSelectedLanguage]);
+  useFocusEffect(
+    useCallback(() => {
+      // Set the selected language when the component is focused
+      if (language) {
+        setSelectedLanguage(language as LanguageCode);
+      }
+    }, [language, setSelectedLanguage, quiz])
+  );
 
-  if (!language) {
+  if (!language || !selectedLanguage || selectedLanguage !== language) {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      />
+      >
+        <ThemedText>Loading quiz...</ThemedText>
+      </CustomScrollView>
     );
   }
 
-  // Assert language type after validation
-  const validLanguage = language as LanguageCode;
-
   if (quiz === "alphabet") {
     // Get the correct letter array for the language
-    const currentLetters = letters[validLanguage];
+    const currentLetters = letters[selectedLanguage];
 
     // Check if letters exist for the language
     if (!currentLetters) {
@@ -46,7 +50,7 @@ export default function LanguageQuiz() {
           headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
         >
           <ThemedText>
-            Error: No letters found for language {validLanguage}.
+            Error: No letters found for language {selectedLanguage}.
           </ThemedText>
         </CustomScrollView>
       );
@@ -56,10 +60,7 @@ export default function LanguageQuiz() {
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
       >
-        <QuizCointainer
-          letters={currentLetters} // Pass the correct letter array
-          language={validLanguage} // Pass the validated language code
-        ></QuizCointainer>
+        <QuizCointainer isScreenFocused={isFocused} />
       </CustomScrollView>
     );
   }
@@ -70,7 +71,7 @@ export default function LanguageQuiz() {
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
       >
-        <PictureQuiz language={validLanguage} />
+        <PictureQuiz isScreenFocused={isFocused} />
       </CustomScrollView>
     );
   }
@@ -80,7 +81,7 @@ export default function LanguageQuiz() {
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
       >
-        <SpotTheWordQuiz language={validLanguage} />
+        <SpotTheWordQuiz isScreenFocused={isFocused} />
       </CustomScrollView>
     );
   }
