@@ -20,6 +20,7 @@ const MAPPING = {
   xmark: "close",
   "speaker.3": "volume-up",
   "arrow.right.circle": "double-arrow",
+  "chevron.left": "chevron-left",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

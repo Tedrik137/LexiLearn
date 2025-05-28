@@ -72,7 +72,10 @@ export default function PictureQuiz({
     if (quiz.quizCompleted) {
       // Update user XP when the quiz is completed
       // Calculate XP based on the score from the latest state (prevQuiz.score)
-      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+      const xpGained =
+        quiz.quizMode === "practice"
+          ? Math.floor((quiz.score / maxQuestions) * 200)
+          : Math.floor((quiz.score / maxQuestions) * 350);
 
       if (xpGained > 0) {
         console.log(

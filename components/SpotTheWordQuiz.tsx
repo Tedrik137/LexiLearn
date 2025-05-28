@@ -76,7 +76,10 @@ export default function SpotTheWordQuiz({
     if (quiz.quizCompleted) {
       // Update user XP when the quiz is completed
       // Calculate XP based on the score from the latest state (prevQuiz.score)
-      const xpGained = Math.floor((quiz.score / maxQuestions) * 100);
+      const xpGained =
+        quiz.quizMode === "practice"
+          ? Math.floor((quiz.score / maxQuestions) * 150)
+          : Math.floor((quiz.score / maxQuestions) * 300);
 
       if (xpGained > 0) {
         console.log(

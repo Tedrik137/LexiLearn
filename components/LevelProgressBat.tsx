@@ -53,6 +53,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 20,
     marginRight: 10,
+    marginTop: 6,
+    marginLeft: "auto",
   },
   outerContainer: {
     backgroundColor: "#e8ebed",
