@@ -33,6 +33,7 @@ export default function LanguageQuiz() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <ThemedText>Loading quiz...</ThemedText>
       </CustomScrollView>
@@ -48,6 +49,7 @@ export default function LanguageQuiz() {
       return (
         <CustomScrollView
           headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+          canPopNavigation={true}
         >
           <ThemedText>
             Error: No letters found for language {selectedLanguage}.
@@ -59,6 +61,7 @@ export default function LanguageQuiz() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <QuizCointainer isScreenFocused={isFocused} />
       </CustomScrollView>
@@ -70,6 +73,7 @@ export default function LanguageQuiz() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <PictureQuiz isScreenFocused={isFocused} />
       </CustomScrollView>
@@ -80,6 +84,7 @@ export default function LanguageQuiz() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <SpotTheWordQuiz isScreenFocused={isFocused} />
       </CustomScrollView>
@@ -90,6 +95,7 @@ export default function LanguageQuiz() {
   return (
     <CustomScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+      canPopNavigation={true}
     >
       <ThemedText>Quiz type '{quiz}' not found.</ThemedText>
     </CustomScrollView>

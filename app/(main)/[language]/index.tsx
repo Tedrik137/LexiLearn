@@ -19,6 +19,10 @@ export default function LanguageQuizzes() {
     (state) => state.setSelectedLanguage
   );
 
+  const currentLanguageProgress = useAuthStore(
+    (state) => state.currentLanguageProgress
+  );
+
   useFocusEffect(
     useCallback(() => {
       if (language) {
@@ -35,13 +39,26 @@ export default function LanguageQuizzes() {
     );
   }
 
+  if (!currentLanguageProgress) {
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
+      >
+        <ThemedText>Loading quizzes...</ThemedText>
+      </CustomScrollView>
+    );
+  }
+
   if (proficiency === "beginner") {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <ThemedText>
-          Completing quizzes will give you XP and unlock more quizzes.
+          Completing quizzes will give you XP and unlock more quizzes. Test mode
+          gives your more XP than practice mode.
         </ThemedText>
         <ThemedView style={[styles.container]}>
           <ThemedView style={[styles.quizSelectContainer]}>
@@ -51,28 +68,50 @@ export default function LanguageQuizzes() {
                 // push the english alphabet quiz onto the navigation stack
                 router.push(`/(main)/${language}/alphabet`);
               }}
+              style={{ backgroundColor: "transparent" }}
             >
-              <IconSymbol name="arrow.right.circle" color="navy" />
+              <IconSymbol
+                name="arrow.right.circle"
+                color="navy"
+                style={{ backgroundColor: "transparent" }}
+              />
             </Pressable>
           </ThemedView>
-          <ThemedView style={[styles.quizSelectContainer]}>
-            <ThemedText>What's that Picture?</ThemedText>
-            <Pressable
-              onPress={() => {
-                // push the english alphabet quiz onto the navigation stack
-                router.push(`/(main)/${language}/picture`);
-              }}
-            >
-              <IconSymbol name="arrow.right.circle" color="navy" />
-            </Pressable>
-          </ThemedView>
-          <ThemedView style={[styles.quizSelectContainer]}>
+
+          <ThemedView
+            style={[
+              styles.quizSelectContainer,
+              currentLanguageProgress.level >= 5
+                ? { opacity: 1 }
+                : { opacity: 0.5 },
+            ]}
+          >
             <ThemedText>What's that Word?</ThemedText>
             <Pressable
               onPress={() => {
                 // push the english alphabet quiz onto the navigation stack
                 router.push(`/(main)/${language}/word`);
               }}
+              disabled={currentLanguageProgress.level < 5}
+            >
+              <IconSymbol name="arrow.right.circle" color="navy" />
+            </Pressable>
+          </ThemedView>
+          <ThemedView
+            style={[
+              styles.quizSelectContainer,
+              currentLanguageProgress.level >= 10
+                ? { opacity: 1 }
+                : { opacity: 0.5 },
+            ]}
+          >
+            <ThemedText>What's that Picture?</ThemedText>
+            <Pressable
+              onPress={() => {
+                // push the english alphabet quiz onto the navigation stack
+                router.push(`/(main)/${language}/picture`);
+              }}
+              disabled={currentLanguageProgress.level < 10}
             >
               <IconSymbol name="arrow.right.circle" color="navy" />
             </Pressable>
@@ -85,6 +124,7 @@ export default function LanguageQuizzes() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <ThemedText>
           Completing quizzes will give you XP and unlock more quizzes.
@@ -99,6 +139,7 @@ export default function LanguageQuizzes() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <ThemedText>
           Completing quizzes will give you XP and unlock more quizzes.
@@ -113,6 +154,7 @@ export default function LanguageQuizzes() {
     return (
       <CustomScrollView
         headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
       >
         <ThemedText>
           Completing quizzes will give you XP and unlock more quizzes.

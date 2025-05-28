@@ -16,23 +16,12 @@ export default function HeaderXPDisplay() {
     (state) => state.initializing || state.loading
   );
 
-  if (!selectedLanguage) {
-    return <ThemedText>XP...</ThemedText>;
-  }
-
   if (
-    authLoading &&
-    (!currentLanguageProgress ||
-      currentLanguageProgress.languageCode !== selectedLanguage)
-  ) {
-    return <ActivityIndicator size="small" />;
-  }
-
-  if (
+    authLoading ||
     !currentLanguageProgress ||
     currentLanguageProgress.languageCode !== selectedLanguage
   ) {
-    return <ThemedText>XP...</ThemedText>;
+    return <ActivityIndicator size="small" />;
   }
 
   return (
