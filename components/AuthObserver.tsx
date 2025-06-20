@@ -45,7 +45,7 @@ export default function AuthObserver({
     if (user && profileComplete) {
       if (!inMainGroup) {
         // If user is signed in, profile is complete, and not on a main app page, redirect to main
-        router.replace("/(main)");
+        router.replace("/(main)/home");
       }
     } else if (!user && !inAuthGroup) {
       // If user is not signed in and not on an auth page, redirect to auth

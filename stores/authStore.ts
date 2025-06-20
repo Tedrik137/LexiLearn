@@ -163,7 +163,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const progressColRef = collection(firestore, "userLanguageProgress");
       const q = query(
         progressColRef,
-        where("userId", "==", uid),
+        where("uid", "==", uid),
         where("languageCode", "==", languageCode)
       );
 
@@ -218,7 +218,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         );
 
         const progressData = {
-          userId: uid,
+          uid: uid,
           languageCode: languageCode,
           xp: newXP,
           level: newLevel,
@@ -281,7 +281,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const progressColRef = collection(firestore, "userLanguageProgress");
       const q = query(
         progressColRef,
-        where("userId", "==", uid),
+        where("uid", "==", uid),
         where("languageCode", "==", languageCode)
       );
 

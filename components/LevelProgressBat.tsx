@@ -52,9 +52,9 @@ const styles = StyleSheet.create({
   progressContainer: {
     alignItems: "center",
     height: 20,
-    marginRight: 10,
-    marginTop: 6,
-    marginLeft: "auto",
+    position: "absolute",
+    right: 16,
+    top: (75 + 12) / 2 - 20 / 2,
   },
   outerContainer: {
     backgroundColor: "#e8ebed",

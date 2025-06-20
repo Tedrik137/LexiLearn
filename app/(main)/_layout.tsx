@@ -28,7 +28,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
@@ -52,12 +52,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="cart.fill" color={color} />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="[language]"
-        options={{
-          href: null,
         }}
       />
     </Tabs>
