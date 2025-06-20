@@ -66,7 +66,7 @@ export default function LanguageQuizzes() {
             <Pressable
               onPress={() => {
                 // push the english alphabet quiz onto the navigation stack
-                router.push(`/(main)/${language}/alphabet`);
+                router.push(`/home/${language}/alphabet`);
               }}
               style={{ backgroundColor: "transparent" }}
             >
@@ -90,7 +90,7 @@ export default function LanguageQuizzes() {
             <Pressable
               onPress={() => {
                 // push the english alphabet quiz onto the navigation stack
-                router.push(`/(main)/${language}/word`);
+                router.push(`/home/${language}/word`);
               }}
               disabled={currentLanguageProgress.level < 5}
             >
@@ -109,7 +109,7 @@ export default function LanguageQuizzes() {
             <Pressable
               onPress={() => {
                 // push the english alphabet quiz onto the navigation stack
-                router.push(`/(main)/${language}/picture`);
+                router.push(`/home/${language}/picture`);
               }}
               disabled={currentLanguageProgress.level < 10}
             >

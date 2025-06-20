@@ -28,7 +28,7 @@ export default function ProficiencyModal({
     setIsSubmitting(true);
     setModalVisible(false);
     // navigate to the quiz screen based on proficiency
-    router.push(`/(main)/${language.code}?proficiency=${proficiency}`);
+    router.push(`/home/${language.code}?proficiency=${proficiency}`);
   };
 
   return (

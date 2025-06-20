@@ -11,6 +11,7 @@ export default function ProfileGrid() {
   const router = useRouter();
 
   const handlePress = (route: Parameters<typeof router.push>[0]) => {
+    console.log("Navigating to:", route);
     router.push(route);
   };
 
@@ -28,25 +29,25 @@ export default function ProfileGrid() {
     <ThemedView style={[styles.container]}>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/languages")}
+        onPress={() => handlePress("/profile/languages")}
       >
         <ThemedText style={[styles.text]}>Languages</ThemedText>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/goals")}
+        onPress={() => handlePress("/profile/goals")}
       >
         <ThemedText style={[styles.text]}>Goals</ThemedText>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/languages")}
+        onPress={() => handlePress("/profile/languages")}
       >
         <ThemedText style={[styles.text]}>Offline Lessons</ThemedText>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/languages")}
+        onPress={() => handlePress("/profile/languages")}
       >
         <ThemedText style={[styles.text]}>Placeholder</ThemedText>
       </TouchableOpacity>

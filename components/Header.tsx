@@ -40,7 +40,7 @@ const Header = ({ headerBackgroundColor, canPopNavigation = false }: Props) => {
               onPress={() => {
                 router.back();
               }}
-              style={{ padding: 8, marginTop: 8, marginRight: "auto" }}
+              style={[styles.chevron]}
             >
               <IconSymbol
                 name="chevron.left"
@@ -49,7 +49,7 @@ const Header = ({ headerBackgroundColor, canPopNavigation = false }: Props) => {
               />
             </Pressable>
           )}
-          {user && <Avatar />}
+          <Avatar />
           {selectedLanguage && <HeaderXPDisplay />}
         </>
       )}
@@ -65,6 +65,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+  },
+  chevron: {
+    position: "absolute",
+    left: 16,
+    top: (HEADER_HEIGHT + 12) / 2 - 32 / 2,
   },
 });
 
