@@ -41,9 +41,9 @@ export default function ProfileGrid() {
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/profile/languages")}
+        onPress={() => handlePress("/profile/history")}
       >
-        <ThemedText style={[styles.text]}>Offline Lessons</ThemedText>
+        <ThemedText style={[styles.text]}>Lesson History</ThemedText>
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}

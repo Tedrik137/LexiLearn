@@ -3,13 +3,14 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  User,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
 import { auth } from "@/firebaseConfig";
 
 interface AuthResult {
   success: boolean;
-  user?: any;
+  user?: User | null;
   error?: string;
 }
 
