@@ -84,13 +84,9 @@ export default function QuizContainer({
           `Quiz completed. Gained ${xpGained} XP for language ${language}.`
         );
         try {
-          updateUserXP(xpGained)
-            .then(() => {
-              console.log("User XP updated successfully.");
-            })
-            .catch((error) => {
-              console.error("Error updating user XP:", error);
-            });
+          updateUserXP(xpGained).then(() => {
+            console.log("User XP updated successfully.");
+          });
         } catch (error) {
           console.error("Error updating user XP:", error);
         }

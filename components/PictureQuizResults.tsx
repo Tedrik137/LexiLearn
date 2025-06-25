@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ThemedView } from "./ThemedView";
 import Confetti from "./Confetti";
 import { ThemedText } from "./ThemedText";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { Image } from "expo-image";
+import { useAuthStore } from "@/stores/authStore";
+import { LessonHistoryService } from "@/services/lessonHistoryService";
 
 interface Props {
   quizMode: string;
@@ -22,10 +24,47 @@ export default function PictureQuizResults({
   quizWordPictures,
   answers,
 }: Props) {
+  const user = useAuthStore((state) => state.user);
+  const language = useAuthStore((state) => state.selectedLanguage);
+  const [saving, setSaving] = useState<boolean>(false);
+
+  useEffect(() => {
+    const performSave = async () => {
+      if (!user) {
+        console.warn("QuizResults: User not available, cannot save results.");
+        return;
+      }
+
+      setSaving(true);
+      try {
+        await LessonHistoryService.addLessonEntry({
+          userId: user.uid,
+          language: language ? language : "unknown",
+          name: "What's that Letter?",
+          score: (score / maxQuestions) * 100,
+          mode: quizMode === "practice" ? "Practice" : "Test",
+          difficulty: "Beginner",
+        });
+      } catch (error) {
+        console.error("Error saving quiz results:", error);
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    performSave();
+  }, []);
+
   return (
     <ThemedView style={styles.resultContainer}>
-      <Confetti />
       <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
+      {saving ? (
+        <ThemedText>Saving your results...</ThemedText>
+      ) : (
+        <ThemedText>
+          Quiz results saved. See them in your profile lesson history.
+        </ThemedText>
+      )}
       <ThemedText style={styles.resultMode}>
         Mode: {quizMode === "practice" ? "Practice" : "Test"}
       </ThemedText>
