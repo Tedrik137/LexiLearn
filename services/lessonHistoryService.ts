@@ -11,20 +11,31 @@ import {
 import { LanguageCode } from "@/types/languages";
 import { HistoryItem } from "@/types/lessonHistory";
 
+interface LessonHistoryResult {
+  success: boolean;
+  history?: HistoryItem[];
+  error?: string;
+}
+
 const LESSON_HISTORY_COLLECTION = "lessonHistory";
 
-export const LessonHistoryService = {
-  fetchLessonHistory: async (
+class LessonHistoryService {
+  private firestore = firestore;
+
+  async fetchLessonHistory(
     uid: string,
     languageCode?: LanguageCode // Optional: if you want to filter by language
-  ): Promise<HistoryItem[]> => {
+  ): Promise<LessonHistoryResult> {
     if (!uid) {
       console.error("UID is required to fetch lesson history.");
-      return [];
+      return {
+        success: false,
+        error: "UID is required to fetch lesson history.",
+      };
     }
     try {
       const historyCollectionRef = collection(
-        firestore,
+        this.firestore,
         LESSON_HISTORY_COLLECTION
       );
       let q = query(
@@ -47,23 +58,32 @@ export const LessonHistoryService = {
       querySnapshot.forEach((doc) => {
         history.push({ id: doc.id, ...doc.data() } as HistoryItem);
       });
-      return history;
+      return { success: true, history };
     } catch (error) {
       console.error("Error fetching lesson history:", error);
-      throw error; // Or return empty array / handle error as needed
+      return {
+        success: false,
+        error: `Error fetching lesson history: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      };
     }
-  },
+  }
 
-  addLessonEntry: async (
+  async addLessonEntry(
     entryData: Omit<HistoryItem, "id" | "date">
-  ): Promise<string | null> => {
+  ): Promise<LessonHistoryResult> {
     if (!entryData.userId) {
       console.error("UID is required to add a lesson entry.");
-      return null;
+      return {
+        success: false,
+        error: "UID is required to add a lesson entry.",
+      };
     }
     try {
       const historyCollectionRef = collection(
-        firestore,
+        this.firestore,
+
         LESSON_HISTORY_COLLECTION
       );
 
@@ -77,10 +97,17 @@ export const LessonHistoryService = {
         ...entryData,
         date: todayString,
       });
-      return docRef.id;
+      return { success: true };
     } catch (error) {
       console.error("Error adding lesson entry:", error);
-      throw error;
+      return {
+        success: false,
+        error: `Error adding lesson entry: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      };
     }
-  },
-};
+  }
+}
+
+export default new LessonHistoryService();

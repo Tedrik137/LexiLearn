@@ -5,7 +5,7 @@ import { ThemedText } from "./ThemedText";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { useAuthStore } from "@/stores/authStore";
-import { LessonHistoryService } from "@/services/lessonHistoryService";
+import LessonHistoryService from "@/services/lessonHistoryService";
 
 interface Props {
   quizMode: string;
@@ -37,7 +37,7 @@ export default function PictureQuizResults({
 
       setSaving(true);
       try {
-        await LessonHistoryService.addLessonEntry({
+        const result = await LessonHistoryService.addLessonEntry({
           userId: user.uid,
           language: language ? language : "unknown",
           name: "What's that Letter?",
@@ -45,6 +45,12 @@ export default function PictureQuizResults({
           mode: quizMode === "practice" ? "Practice" : "Test",
           difficulty: "Beginner",
         });
+
+        if (result.success) {
+          console.log("Quiz results saved successfully:", result);
+        } else {
+          console.error("Failed to save quiz results:", result.error);
+        }
       } catch (error) {
         console.error("Error saving quiz results:", error);
       } finally {

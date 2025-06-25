@@ -1,7 +1,7 @@
 import CustomScrollView from "@/components/CustomScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { LessonHistoryService } from "@/services/lessonHistoryService";
+
 import { useAuthStore } from "@/stores/authStore";
 import { LanguageCode } from "@/types/languages";
 import { HistoryItem } from "@/types/lessonHistory";
@@ -9,6 +9,7 @@ import React, { useEffect, useState } from "react";
 import { set } from "react-hook-form";
 import { ActivityIndicator, StyleSheet } from "react-native";
 import { v4 as uuidv4 } from "uuid";
+import LessonHistoryService from "@/services/lessonHistoryService";
 
 export default function HistoryScreen() {
   const user = useAuthStore((state) => state.user);
@@ -20,8 +21,13 @@ export default function HistoryScreen() {
       setIsLoading(true);
       LessonHistoryService.fetchLessonHistory(user.uid)
         .then((result) => {
-          setLessonHistory(result);
-          console.log("History loaded:", result);
+          if (result.success) {
+            setLessonHistory(result.history!);
+            console.log("History loaded:", result);
+          } else {
+            console.error("Failed to load history:", result.error);
+            setLessonHistory([]);
+          }
         })
         .catch((error) => console.error("Failed to load history", error))
         .finally(() => setIsLoading(false));
