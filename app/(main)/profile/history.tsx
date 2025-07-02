@@ -39,6 +39,7 @@ export default function HistoryScreen() {
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
       canPopNavigation={true}
       padding={8}
+      marginTop={24}
     >
       {isLoading ? (
         <ThemedView style={styles.loadingContainer}>

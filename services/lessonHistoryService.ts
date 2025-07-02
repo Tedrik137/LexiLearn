@@ -83,7 +83,6 @@ class LessonHistoryService {
     try {
       const historyCollectionRef = collection(
         this.firestore,
-
         LESSON_HISTORY_COLLECTION
       );
 
@@ -93,7 +92,7 @@ class LessonHistoryService {
       const yyyy = today.getFullYear();
       const todayString = dd + "/" + mm + "/" + yyyy;
 
-      const docRef = await addDoc(historyCollectionRef, {
+      await addDoc(historyCollectionRef, {
         ...entryData,
         date: todayString,
       });

@@ -21,6 +21,7 @@ const MAPPING = {
   "speaker.3": "volume-up",
   "arrow.right.circle": "double-arrow",
   "chevron.left": "chevron-left",
+  goforward: "refresh",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],

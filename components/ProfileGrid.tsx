@@ -47,9 +47,9 @@ export default function ProfileGrid() {
       </TouchableOpacity>
       <TouchableOpacity
         style={[styles.button]}
-        onPress={() => handlePress("/profile/languages")}
+        onPress={() => handlePress("/profile/leaderboards")}
       >
-        <ThemedText style={[styles.text]}>Placeholder</ThemedText>
+        <ThemedText style={[styles.text]}>Leaderboards</ThemedText>
       </TouchableOpacity>
       <ThemedText>Welcome {user?.displayName}</ThemedText>
       <Button title="Sign Out" onPress={handleSignOut} />

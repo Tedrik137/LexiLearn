@@ -16,7 +16,6 @@ export const initializeUserData = functions.auth
     try {
       await userRef.set({
         uid: uid,
-        displayName: user.displayName || "",
         createdAt: FieldValue.serverTimestamp(),
         currentStreak: 0,
         currentStreakStart: FieldValue.serverTimestamp(),
