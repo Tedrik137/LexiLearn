@@ -19,6 +19,8 @@ firebase-debug.log
 firestore-debug.log
 firestore.indexes.json
 firestore.rules
+pglite-debug.log
+pubsub-debug.log
 
 # Native
 *.orig.*
