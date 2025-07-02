@@ -10,6 +10,7 @@ type Props = PropsWithChildren<{
   headerBackgroundColor: { dark: string; light: string };
   padding?: number;
   canPopNavigation?: boolean;
+  marginTop?: number;
 }>;
 
 export default function CustomScrollView({
@@ -17,6 +18,7 @@ export default function CustomScrollView({
   padding = 32,
   headerBackgroundColor,
   canPopNavigation = false,
+  marginTop = 0,
 }: Props) {
   const bottom = useBottomTabOverflow();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -33,7 +35,9 @@ export default function CustomScrollView({
           headerBackgroundColor={headerBackgroundColor}
           canPopNavigation={canPopNavigation}
         />
-        <ThemedView style={[styles.content, { padding: padding }]}>
+        <ThemedView
+          style={[styles.content, { padding: padding, marginTop: marginTop }]}
+        >
           {children}
         </ThemedView>
       </Animated.ScrollView>
