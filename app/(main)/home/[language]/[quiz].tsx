@@ -10,6 +10,8 @@ import SpotTheWordQuiz from "@/components/SpotTheWordQuiz";
 import { useAuthStore } from "@/stores/authStore";
 import { useCallback, useEffect } from "react";
 import { useIsFocused } from "@react-navigation/native";
+import ScrambledWord from "@/components/ScrambledWord";
+import WordScrambleQuiz from "@/components/WordScrambleQuiz";
 
 export default function LanguageQuiz() {
   let { proficiency, language, quiz } = useLocalSearchParams();
@@ -87,6 +89,17 @@ export default function LanguageQuiz() {
         canPopNavigation={true}
       >
         <SpotTheWordQuiz isScreenFocused={isFocused} />
+      </CustomScrollView>
+    );
+  }
+  if (quiz === "scrambled") {
+    // Handle scrambled word quiz logic here
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
+      >
+        <WordScrambleQuiz isScreenFocused={isFocused} />
       </CustomScrollView>
     );
   }
