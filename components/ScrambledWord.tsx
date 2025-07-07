@@ -1,44 +1,56 @@
 import { ThemedText } from "./ThemedText";
-import { ThemedView } from "./ThemedView";
-import { Pressable, StyleSheet } from "react-native";
-import { v4 as uuidv4 } from "uuid";
+import { Pressable, StyleSheet, ScrollView } from "react-native"; // Import ScrollView
 import { Letter } from "./ScrambledWordQuizGrid";
+import { useEffect, useRef } from "react";
 
 interface Props {
   scrambledLetters: (Letter | null)[];
   onLetterPress: (letter: Letter) => void;
+  direction: "ltr" | "rtl";
 }
 
-const ScrambledWord = ({ scrambledLetters, onLetterPress }: Props) => {
+const ScrambledWord = ({
+  scrambledLetters,
+  onLetterPress,
+  direction,
+}: Props) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (direction === "rtl") {
+      scrollViewRef.current?.scrollToEnd({ animated: false });
+    }
+  }, [scrambledLetters, direction]);
+
   return (
-    <ThemedView style={styles.container}>
-      {scrambledLetters.map((letter) => (
+    <ScrollView
+      ref={scrollViewRef} // Assign the ref
+      horizontal
+      showsHorizontalScrollIndicator={true}
+      contentContainerStyle={styles.container}
+    >
+      {scrambledLetters.map((letterObj, index) => (
         <Pressable
-          onPress={() => {
-            if (letter) {
-              onLetterPress(letter);
-            }
-          }}
-          key={uuidv4()}
-          style={[styles.button, !letter && styles.buttonDisabled]}
-          disabled={!letter} // Disable if letter is null
+          onPress={() => letterObj && onLetterPress(letterObj)}
+          key={index}
+          style={[styles.button, !letterObj && styles.buttonDisabled]}
+          disabled={!letterObj}
         >
-          {letter && (
-            <ThemedText style={[styles.letter]}>{letter.char}</ThemedText>
+          {letterObj && (
+            <ThemedText style={[styles.letter]}>{letterObj.char}</ThemedText>
           )}
         </Pressable>
       ))}
-    </ThemedView>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
     alignItems: "center",
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
     gap: 15,
   },
   button: {
@@ -50,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonDisabled: {
-    backgroundColor: "transparent", // Make used letters invisible
+    backgroundColor: "transparent",
   },
   letter: {
     fontSize: 18,

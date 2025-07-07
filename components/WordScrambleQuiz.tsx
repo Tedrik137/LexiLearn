@@ -15,6 +15,10 @@ import ScrambledWord from "./ScrambledWord";
 import { localizedLanguageProperties } from "@/entities/languageProperties";
 import UnscrambledAreaBoxes from "./UnscrambledAreaBoxes";
 import ScrambledWordQuizGrid from "./ScrambledWordQuizGrid";
+import CircleCountdownTimer from "./CircleCountdownTimer";
+import WordScrambleQuizResults from "./WordScrambleQuizResults";
+import LetterSoundButton from "./LetterSoundButton";
+import { IconSymbol } from "./ui/IconSymbol";
 
 interface Props {
   maxQuestions?: number;
@@ -26,9 +30,26 @@ type Quiz = {
   score: number;
   quizCompleted: boolean;
   quizMode: string;
-  showFeedback: boolean;
   lastAnswerCorrect: boolean;
+  showFeedback: boolean;
   scrambledWords: { scrambled: string; original: string }[];
+};
+
+const getUniqueScrambledWords = (
+  words: { scrambled: string; original: string }[],
+  count: number
+) => {
+  // Create a copy to avoid modifying the original array from the import
+  const shuffled = [...words];
+
+  // Fisher-Yates shuffle algorithm for an unbiased shuffle
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // Swap elements
+  }
+
+  // Return the first 'count' items from the shuffled array
+  return shuffled.slice(0, count);
 };
 
 export default function WordScrambleQuiz({
@@ -40,8 +61,8 @@ export default function WordScrambleQuiz({
     score: 0,
     quizCompleted: false,
     quizMode: "practice",
-    showFeedback: false,
     lastAnswerCorrect: false,
+    showFeedback: false,
     scrambledWords: [{ scrambled: "", original: "" }],
   });
 
@@ -50,6 +71,8 @@ export default function WordScrambleQuiz({
     useState<string>("erfidn");
   // State to track loading status
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+
   const updateUserXP = useAuthStore((state) => state.updateUserXP);
   const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
   const words =
@@ -62,7 +85,7 @@ export default function WordScrambleQuiz({
       console.log(
         `WordScrambleQuiz: Effect for setupQuiz. Screen focused. Language: ${language}`
       );
-      setupQuiz();
+      setupQuiz("practice");
     } else {
       console.log(
         `WordScrambleQuiz: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
@@ -79,6 +102,7 @@ export default function WordScrambleQuiz({
     }
 
     if (quiz.quizCompleted) {
+      setIsPlaying(false);
       // Update user XP when the quiz is completed
       // Calculate XP based on the score from the latest state (prevQuiz.score)
       const xpGained =
@@ -100,6 +124,7 @@ export default function WordScrambleQuiz({
       }
     } else {
       console.log(`Quiz incomplete. Current score: ${quiz.score}`);
+      setIsPlaying(true);
     }
   }, [
     quiz.quizCompleted,
@@ -110,21 +135,29 @@ export default function WordScrambleQuiz({
     isScreenFocused,
   ]);
 
-  // Select a random letter from the available letters
-  const selectRandomWord = () => {
-    if (words.length > 0)
-      return words[Math.floor(Math.random() * words.length)];
-    return { scrambled: "erfidn", original: "friend" };
-  };
+  useEffect(() => {
+    // This effect manages the visibility of the feedback message for incorrect answers.
+    // It shows for 2 seconds and then disappears automatically.
+    if (quiz.showFeedback && !quiz.lastAnswerCorrect) {
+      const timer = setTimeout(() => {
+        setQuiz((prev) => ({ ...prev, showFeedback: false }));
+      }, 2000); // Hide after 2 seconds
 
-  const createNewQuiz = () => {
-    return new Array(maxQuestions).fill(null).map(selectRandomWord);
-  };
+      // Cleanup the timer if the component unmounts or dependencies change
+      return () => clearTimeout(timer);
+    }
+  }, [quiz.showFeedback, quiz.lastAnswerCorrect]);
 
   // Handler for when user submits an answer
-  const handleAnswerSubmit = (selectedWord: string) => {
+  const handleAnswerSubmit = (selectedWord: string, direction: string) => {
     // Check if the answer is correct
-    const isCorrect = selectedWord === currentTargetWord;
+    let isCorrect = selectedWord === currentTargetWord;
+
+    if (direction === "rtl") {
+      isCorrect =
+        selectedWord === currentTargetWord.split("").reverse().join("");
+    }
+
     // Queue state updates for score and feedback
     setQuiz((prevQuiz) => ({
       ...prevQuiz,
@@ -134,15 +167,7 @@ export default function WordScrambleQuiz({
       showFeedback: prevQuiz.quizMode === "practice",
     }));
 
-    if (quiz.quizMode === "practice") {
-      // Move to next question after a delay
-      setTimeout(() => {
-        moveToNextQuestion();
-      }, 2000); // 2-second delay to show feedback
-    } else {
-      // In test mode, immediately move to the next question
-      moveToNextQuestion();
-    }
+    return isCorrect;
   };
 
   const moveToNextQuestion = () => {
@@ -156,15 +181,14 @@ export default function WordScrambleQuiz({
         return {
           ...prevQuiz,
           quizCompleted: true,
-          showFeedback: false, // Ensure feedback is off on results screen
           currentQuestion: nextQuestionNumber, // Update question number to maxQuestions
         };
       } else {
-        const nextWord = quiz.scrambledWords[nextQuestionNumber];
+        const nextWord = prevQuiz.scrambledWords[nextQuestionNumber];
         setCurrentTargetWord(nextWord.original);
         setCurrentScrambledWord(nextWord.scrambled);
 
-        if (isScreenFocused) {
+        if (isScreenFocused && prevQuiz.quizMode === "practice") {
           console.log(
             `WordScrambleQuiz: Playing sound for next question: ${nextWord.original}, lang: ${language}`
           );
@@ -196,7 +220,7 @@ export default function WordScrambleQuiz({
     );
 
     setTimeout(() => {
-      const newWords = createNewQuiz();
+      const newWords = getUniqueScrambledWords(words, maxQuestions);
 
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
@@ -216,7 +240,7 @@ export default function WordScrambleQuiz({
         `WordScrambleQuiz: Quiz setup complete. First letter: ${newWords[0].original}, lang: ${language}`
       );
 
-      if (isScreenFocused) {
+      if (isScreenFocused && newMode === "practice") {
         // Play sound only if screen is focused
         console.log(
           `WordScrambleQuiz: Playing sound for first letter: ${newWords[0].original}, lang: ${language}`
@@ -240,6 +264,13 @@ export default function WordScrambleQuiz({
     return null; // Or a lightweight placeholder
   }
 
+  const timerComplete = () => {
+    setQuiz((prevQuiz) => ({
+      ...prevQuiz,
+      quizCompleted: true,
+    }));
+  };
+
   if (isLoading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -260,6 +291,8 @@ export default function WordScrambleQuiz({
         currentStep={quiz.currentQuestion}
         marginTop={10}
       />
+      <CircleCountdownTimer onComplete={timerComplete} isPlaying={isPlaying} />
+
       {!quiz.quizCompleted && (
         <>
           <ThemedView style={styles.modeToggleContainer}>
@@ -288,27 +321,71 @@ export default function WordScrambleQuiz({
           {quiz.quizMode === "practice" && (
             <ThemedText style={styles.modeDescription}>
               Practice Mode: Unscramble the letters to form the correct word.
-              The unscrambled word will be played as audio before and after
-              submission. Feedback will be shown after each answer.
+              The unscrambled word will be played as audio before submission.
+              You must unscramble the word to get the next word. This quiz is
+              timed.
             </ThemedText>
           )}
 
           {quiz.quizMode === "test" && (
             <ThemedText style={styles.modeDescription}>
               Test Mode: Test your knowledge! No audio will be played before
-              submission. You will only see feedback after the quiz is
-              completed.
+              submission. This quiz is timed.
             </ThemedText>
           )}
 
-          <ScrambledWordQuizGrid scrambledWord={currentScrambledWord} />
+          {currentScrambledWord && (
+            <ThemedView style={styles.container}>
+              {quiz.showFeedback && (
+                <ThemedView
+                  style={[
+                    styles.feedbackContainer,
+                    quiz.lastAnswerCorrect
+                      ? styles.correctFeedback
+                      : styles.incorrectFeedback,
+                  ]}
+                >
+                  <ThemedText style={styles.feedbackText}>
+                    {quiz.lastAnswerCorrect
+                      ? `Correct: The word was: ${currentTargetWord}`
+                      : `Incorrect! Please try again.`}
+                  </ThemedText>
+                </ThemedView>
+              )}
+              <ScrambledWordQuizGrid
+                scrambledWord={currentScrambledWord}
+                submitAnswer={handleAnswerSubmit}
+                moveToNextQuestion={moveToNextQuestion}
+              />
+
+              {quiz.quizMode !== "test" && (
+                <>
+                  <LetterSoundButton
+                    onPress={() => playSound(currentTargetWord, language)}
+                    size={70}
+                    selected={false}
+                    disabled={quiz.showFeedback}
+                  >
+                    <IconSymbol size={24} name="speaker.3" color="white" />
+                  </LetterSoundButton>
+                  <ThemedText style={styles.helpText}>
+                    Tap to hear the sound again
+                  </ThemedText>
+                </>
+              )}
+            </ThemedView>
+          )}
         </>
       )}
 
       {quiz.quizCompleted && (
-        <ThemedText style={styles.modeDescription}>
-          Quiz Completed! Review your results below.
-        </ThemedText>
+        <WordScrambleQuizResults
+          score={quiz.score}
+          maxQuestions={maxQuestions}
+          setupQuiz={setupQuiz}
+          quizMode={quiz.quizMode}
+          scrambledWords={quiz.scrambledWords}
+        />
       )}
     </ThemedView>
   );
@@ -330,6 +407,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: "#333",
+  },
+  quizHeader: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
   },
   modeToggleContainer: {
     flexDirection: "row",
@@ -388,5 +470,33 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  feedbackContainer: {
+    padding: 0.1,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  correctFeedback: {
+    backgroundColor: "rgba(0, 200, 0, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 200, 0, 0.5)",
+  },
+  incorrectFeedback: {
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 0, 0, 0.3)",
+  },
+  feedbackText: {
+    fontSize: 18,
+    textAlign: "center",
+    padding: 10,
+    fontWeight: "bold",
+  },
+  helpText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "gray",
   },
 });

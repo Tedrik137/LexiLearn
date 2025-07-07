@@ -13,7 +13,7 @@ export const localizedScrambledWords = {
     { scrambled: "rhecate", original: "teacher" },
     { scrambled: "kmreta", original: "market" },
     { scrambled: "limyaf", original: "family" },
-    { scrambled: "tsaurerna", original: "restaurant" },
+    { scrambled: "tsaurenart", original: "restaurant" }, // Corrected: Added missing 't'
     { scrambled: "lyeirat", original: "reality" },
     { scrambled: "vriayet", original: "variety" },
     { scrambled: "ytaloly", original: "loyalty" },
@@ -41,7 +41,7 @@ export const localizedScrambledWords = {
     { scrambled: "utéaloy", original: "loyauté" },
     { scrambled: "euqusim", original: "musique" },
     { scrambled: "stcjeiu", original: "justice" },
-    { scrambled: "cfieah", original: "affiche" },
+    { scrambled: "cfiefah", original: "affiche" }, // Corrected: Added missing 'f'
     { scrambled: "tauleap", original: "plateau" },
     { scrambled: "othèquebilib", original: "bibliothèque" },
   ],
@@ -59,7 +59,7 @@ export const localizedScrambledWords = {
     { scrambled: "ةئلعا", original: "عائلة" }, // family
     { scrambled: "عمطم", original: "مطعم" }, // restaurant
     { scrambled: "عاقو", original: "واقع" }, // reality
-    { scrambled: "عتنوى", original: "تنوع" }, // variety
+    { scrambled: "عتون", original: "تنوع" }, // variety - Corrected: Had wrong characters
     { scrambled: "ءاوف", original: "وفاء" }, // loyalty
     { scrambled: "يقىسوم", original: "موسيقى" }, // music
     { scrambled: "ةكمحم", original: "محكمة" }, // justice/court
