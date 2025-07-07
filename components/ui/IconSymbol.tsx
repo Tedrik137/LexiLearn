@@ -21,6 +21,8 @@ const MAPPING = {
   "speaker.3": "volume-up",
   "arrow.right.circle": "double-arrow",
   "chevron.left": "chevron-left",
+  "arrowtriangle.right.fill": "play-arrow",
+  "speaker.slash.fill": "volume-off",
   goforward: "refresh",
 } as Partial<
   Record<

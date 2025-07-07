@@ -29,8 +29,10 @@ export default function QuizResults({
 
   useEffect(() => {
     const performSave = async () => {
-      if (!user) {
-        console.warn("QuizResults: User not available, cannot save results.");
+      if (!user || !language) {
+        console.warn(
+          "QuizResults: User or language not available, cannot save results."
+        );
         return;
       }
 
@@ -38,7 +40,7 @@ export default function QuizResults({
       try {
         const result = await LessonHistoryService.addLessonEntry({
           userId: user.uid,
-          language: language ? language : "unknown",
+          language: language,
           name: "What's that Letter?",
           score: (score / maxQuestions) * 100,
           mode: quizMode === "practice" ? "Practice" : "Test",

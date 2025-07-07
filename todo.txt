@@ -1,5 +1,8 @@
 Leaderboard
 Intermediate Quizzes
+    Word Scramble
+    Dictation Exercises
+    Fill-in-the-Blank Stories
 Settings Page
 Sign out Mechanism
 Styling

@@ -130,7 +130,22 @@ export default function LanguageQuizzes() {
           Completing quizzes will give you XP and unlock more quizzes.
         </ThemedText>
         <ThemedView style={[styles.container]}>
-          {/* insert intermediate quizzes here... */}
+          <ThemedView style={[styles.quizSelectContainer]}>
+            <ThemedText>Unscramble Word?</ThemedText>
+            <Pressable
+              onPress={() => {
+                // push the english alphabet quiz onto the navigation stack
+                router.push(`/home/${language}/scrambled`);
+              }}
+              style={{ backgroundColor: "transparent" }}
+            >
+              <IconSymbol
+                name="arrow.right.circle"
+                color="navy"
+                style={{ backgroundColor: "transparent" }}
+              />
+            </Pressable>
+          </ThemedView>
         </ThemedView>
       </CustomScrollView>
     );

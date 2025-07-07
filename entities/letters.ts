@@ -60,6 +60,8 @@ export const letters: LettersDict = {
     "م",
     "ن",
     "ه",
+    "و",
+    "ي",
   ],
   "fr-FR": [
     "a",
