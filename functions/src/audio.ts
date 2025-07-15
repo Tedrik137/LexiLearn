@@ -20,7 +20,7 @@ export const getOrCreateTTSAudio = functions
     );
 
     // 2. Input Validation
-    const { fileName, text, language } = data;
+    const { fileName, text, language, gender } = data;
     if (!fileName || !text || !language) {
       logger.error("TTS request missing required parameters:", data);
       throw new functions.https.HttpsError(
@@ -74,7 +74,7 @@ export const getOrCreateTTSAudio = functions
       const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_TTS_API_KEY}`;
       const ttsPayload = {
         input: { text: text },
-        voice: { languageCode: language, ssmlGender: "MALE" }, // Adjust voice params as needed
+        voice: { languageCode: language, ssmlGender: gender }, // Adjust voice params as needed
         audioConfig: { audioEncoding: "MP3" },
       };
 

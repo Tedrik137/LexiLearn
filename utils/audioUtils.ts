@@ -1,5 +1,5 @@
 import * as FileSystem from "expo-file-system";
-import { Audio } from "expo-av";
+import { Audio, AVPlaybackStatus } from "expo-av";
 import { getFunctions, httpsCallable } from "firebase/functions"; // Import Functions SDK
 import { LanguageCode } from "@/types/languages";
 
@@ -12,29 +12,55 @@ const CACHE_FOLDER = `${FileSystem.cacheDirectory}audio/`;
 let currentSound: Audio.Sound | undefined;
 let currentRequestId = 0;
 
-// Helper function to play audio (remains mostly the same)
-async function playAudio(uri: string, requestId: number) {
-  if (requestId !== currentRequestId) return; // Check if it's still the latest request
+// Helper function to play audio. It now returns a Promise that resolves on completion.
+function playAudio(uri: string, requestId: number): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    // Check if it's still the latest request
+    if (requestId !== currentRequestId) {
+      console.log("Skipping playback for stale request.");
+      resolve(); // Resolve silently to not block the chain
+      return;
+    }
 
-  try {
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    currentSound = sound;
-    await sound.playAsync();
-    // Optional: Add onPlaybackStatusUpdate to unload when finished
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-        currentSound = undefined;
-      }
-    });
-  } catch (error) {
-    console.error("Error playing audio:", error);
-    currentSound = undefined; // Ensure cleanup on error
-  }
+    try {
+      const { sound } = await Audio.Sound.createAsync({ uri });
+      currentSound = sound;
+
+      sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+        if (!status.isLoaded) {
+          // Handle unload or error states
+          if (status.error) {
+            console.error(`Playback Error: ${status.error}`);
+            currentSound = undefined;
+            reject(new Error(status.error));
+          }
+          return;
+        }
+
+        if (status.didJustFinish) {
+          sound.unloadAsync();
+          currentSound = undefined;
+          resolve(); // Playback finished successfully
+        }
+      });
+
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error creating or playing sound:", error);
+      currentSound = undefined; // Ensure cleanup on error
+      reject(error);
+    }
+  });
 }
 
-export async function playSound(text: string, language: LanguageCode) {
-  if (!text || !language) return;
+export async function playSound(
+  text: string,
+  language: LanguageCode,
+  gender: "MALE" | "FEMALE" = "MALE"
+): Promise<void> {
+  if (!text || !language) {
+    return;
+  }
 
   const requestId = ++currentRequestId;
 
@@ -50,32 +76,31 @@ export async function playSound(text: string, language: LanguageCode) {
     }
   }
 
-  const fileName = `${encodeURIComponent(text)}-${language}.mp3`;
+  const fileName = `${encodeURIComponent(text)}-${language}-${gender}.mp3`;
   const cachedFilePath = `${CACHE_FOLDER}${fileName}`;
 
-  // Check local cache first
-  const fileInfo = await FileSystem.getInfoAsync(cachedFilePath);
-  if (fileInfo.exists) {
-    console.log(`Playing cached audio for "${text}"`);
-    return playAudio(cachedFilePath, requestId);
-  }
-
-  // Ensure cache directory exists
-  await FileSystem.makeDirectoryAsync(CACHE_FOLDER, { intermediates: true });
-
   try {
+    // Check local cache first
+    const fileInfo = await FileSystem.getInfoAsync(cachedFilePath);
+    if (fileInfo.exists) {
+      console.log(`Playing cached audio for "${text}"`);
+      await playAudio(cachedFilePath, requestId);
+      return;
+    }
+
+    // Ensure cache directory exists
+    await FileSystem.makeDirectoryAsync(CACHE_FOLDER, { intermediates: true });
+
     console.log(`Audio not cached for "${text}", calling Cloud Function...`);
-    // Get the callable function reference
     const getOrCreateTTS = httpsCallable(functions, "getOrCreateTTSAudio");
 
-    // Call the function with necessary data
     const result = await getOrCreateTTS({
       fileName: fileName,
       text: text,
       language: language,
+      gender: gender,
     });
 
-    // Type assertion for the expected data structure
     const { success, encodedMP3, source } = result.data as {
       success: boolean;
       encodedMP3: string;
@@ -84,34 +109,45 @@ export async function playSound(text: string, language: LanguageCode) {
 
     if (success && encodedMP3) {
       console.log(`Received audio from Cloud Function (source: ${source})`);
-      // Save Base64 MP3 to a file
       await FileSystem.writeAsStringAsync(cachedFilePath, encodedMP3, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      // Ensure this is still the latest request before playing
       if (requestId === currentRequestId) {
         console.log(`Playing ${source} audio for "${text}"`);
-        return playAudio(cachedFilePath, requestId);
+        await playAudio(cachedFilePath, requestId);
       } else {
         console.log(
           "Newer audio request arrived, skipping playback for this one."
         );
       }
     } else {
-      // The error should ideally be caught in the catch block below
-      // due to the Cloud Function throwing HttpsError
-      console.error(
-        "Cloud Function call reported failure or missing audio data:",
-        result.data
+      throw new Error(
+        "Cloud Function call reported failure or missing audio data."
       );
     }
   } catch (error: any) {
-    // Handle errors thrown by the callable function (HttpsError)
     console.error(
       `Error calling getOrCreateTTSAudio Cloud Function for "${text}":`,
       error
     );
-    // You could inspect error.code and error.message here for more details
+    // Re-throw the error so the caller's .catch() block is triggered
+    throw error;
+  }
+}
+
+export async function stopCurrentSound(): Promise<void> {
+  currentRequestId++; // Increment to skip any ongoing playback
+
+  if (currentSound) {
+    try {
+      await currentSound.stopAsync();
+      await currentSound.unloadAsync();
+      console.log("Audio stoppped and unloaded due to focus change.");
+    } catch (error) {
+      console.warn("Error stopping/unloading current sound:", error);
+    } finally {
+      currentSound = undefined; // Ensure cleanup
+    }
   }
 }

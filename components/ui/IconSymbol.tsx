@@ -23,6 +23,7 @@ const MAPPING = {
   "chevron.left": "chevron-left",
   "arrowtriangle.right.fill": "play-arrow",
   "speaker.slash.fill": "volume-off",
+  "arrow.right.square.fill": "arrow-circle-right",
   goforward: "refresh",
 } as Partial<
   Record<
