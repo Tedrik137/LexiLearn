@@ -11,7 +11,7 @@ export const descriptions: ScenarioDescription = {
     "In this scenario, you are at a restaurant where you can order food and interact with the staff.",
   store:
     "This scenario takes place in a store where you can shop for items and ask for help from the staff.",
-  doctor:
+  hospital:
     "In this scenario, you are at a hospital where you can see a doctor and discuss your health concerns.",
   hotel:
     "This scenario is set in a hotel where you can check in, ask for room details, and interact with the staff.",
@@ -19,12 +19,27 @@ export const descriptions: ScenarioDescription = {
     "In this scenario, you are at an airport where you can check in for your flight and go through security.",
 };
 
-export type ScenarioSentence = {
+interface ScenarioPictures {
+  [key: string]: any;
+}
+
+export const scenarioPictures: ScenarioPictures = {
+  cafe: require("../assets/images/cafe.jpg"),
+  library: require("../assets/images/library.jpg"),
+  park: require("../assets/images/park.jpg"),
+  restaurant: require("../assets/images/restaurant.jpg"),
+  store: require("../assets/images/store.jpg"),
+  hospital: require("../assets/images/hospital.jpg"),
+  hotel: require("../assets/images/hotel.jpg"),
+  airport: require("../assets/images/airport.jpg"),
+};
+
+export interface ScenarioSentence {
   name: string;
   character: string;
   prompt: string;
   response: string;
-};
+}
 
 interface ScenarioSentences {
   [key: string]: ScenarioSentence[];
@@ -41,7 +56,6 @@ export const sentences: ScenarioSentences = {
     {
       name: "Order Coffee",
       character: "Barista",
-
       prompt: "What kind of coffee would you like?",
       response: "I'd like a cappuccino, please.",
     },
@@ -164,7 +178,7 @@ export const sentences: ScenarioSentences = {
       response: "Thank you! I appreciate your help.",
     },
   ],
-  doctor: [
+  hospital: [
     {
       name: "Greeting",
       character: "Receptionist",

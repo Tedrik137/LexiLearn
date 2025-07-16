@@ -1,18 +1,38 @@
-import { ScenarioSentence } from "@/entities/rolePlayingSentences";
+import {
+  ScenarioSentence,
+  descriptions,
+  scenarioPictures,
+} from "@/entities/rolePlayingSentences";
 import React from "react";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
-import { StyleSheet } from "react-native";
-import { descriptions } from "@/entities/rolePlayingSentences";
+import { Dimensions, StyleSheet } from "react-native";
+import { Image } from "expo-image";
+import { useAssets } from "expo-asset";
 
 interface Props {
   scenario: ScenarioSentence;
   scenarioName: string;
 }
 
+const width = Dimensions.get("window").width;
+
 const RolePlayingScenario = ({ scenario, scenarioName }: Props) => {
   return (
     <ThemedView style={[styles.container]}>
+      {scenarioPictures[scenarioName] && (
+        <Image
+          source={scenarioPictures[scenarioName]}
+          style={{
+            width: "100%",
+            height: 200,
+            borderRadius: 8,
+            marginBottom: 16,
+          }}
+          contentFit="cover"
+        />
+      )}
+
       <ThemedText style={[styles.description]}>
         {descriptions[scenarioName]}
       </ThemedText>
@@ -32,7 +52,6 @@ const styles = StyleSheet.create({
     margin: 8,
     display: "flex",
     justifyContent: "center",
-    paddingVertical: 0,
     paddingHorizontal: 16,
     backgroundColor: "#f9f9f9",
     borderWidth: 1,

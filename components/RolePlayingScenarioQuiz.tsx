@@ -297,10 +297,16 @@ const RolePlayingScenarioQuiz = ({
       >
         Role-Playing Scenario Quiz
       </ThemedText>
+      <ThemedText
+        style={{ fontSize: 16, fontWeight: "light", marginBottom: 10 }}
+      >
+        {quiz.scenarios[quiz.currentQuestion].charAt(0).toUpperCase() +
+          quiz.scenarios[quiz.currentQuestion].slice(1)}
+      </ThemedText>
 
       <Carousel
         width={width}
-        height={300}
+        height={500}
         ref={carouselRef}
         data={currentScenario}
         fixedDirection="positive"
