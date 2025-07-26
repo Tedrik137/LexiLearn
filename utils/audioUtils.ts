@@ -23,7 +23,10 @@ function playAudio(uri: string, requestId: number): Promise<void> {
     }
 
     try {
-      const { sound } = await Audio.Sound.createAsync({ uri });
+      const { sound } = await Audio.Sound.createAsync({
+        uri,
+        overrideFileExtensionAndroid: "mp3",
+      });
       currentSound = sound;
 
       sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
@@ -82,7 +85,7 @@ export async function playSound(
   try {
     // Check local cache first
     const fileInfo = await FileSystem.getInfoAsync(cachedFilePath);
-    if (fileInfo.exists) {
+    if (fileInfo.exists && fileInfo.size > 0) {
       console.log(`Playing cached audio for "${text}"`);
       await playAudio(cachedFilePath, requestId);
       return;

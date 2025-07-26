@@ -10,15 +10,10 @@ import { useAuthStore } from "@/stores/authStore";
 import { playSound } from "@/utils/audioUtils";
 import { LanguageCode } from "@/types/languages";
 import RolePlayingScenario from "./RolePlayingScenario";
-import {
-  StyleSheet,
-  ActivityIndicator,
-  Dimensions,
-  Pressable,
-} from "react-native";
+import { StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
-import { IconSymbol } from "./ui/IconSymbol";
-import Mic from "./Mic";
+import SoundContainer from "./SoundContainer";
+import { Audio } from "expo-av";
 
 interface Props {
   maxQuestions?: number;
@@ -30,9 +25,8 @@ type Quiz = {
   score: number;
   quizCompleted: boolean;
   quizMode: string;
-  lastAnswerCorrect: boolean;
-  showFeedback: boolean;
   scenarios: string[];
+  answers: Audio.Sound[];
 };
 
 const width = Dimensions.get("window").width;
@@ -68,9 +62,8 @@ const RolePlayingScenarioQuiz = ({
     score: 0,
     quizCompleted: false,
     quizMode: "practice",
-    lastAnswerCorrect: false,
-    showFeedback: false,
     scenarios: ["cafe", "library", "park"],
+    answers: [],
   });
 
   const [currentScenario, setCurrentScenario] = useState<ScenarioSentence[]>([
@@ -83,7 +76,6 @@ const RolePlayingScenarioQuiz = ({
     {
       name: "Order Coffee",
       character: "Barista",
-
       prompt: "What kind of coffee would you like?",
       response: "I'd like a cappuccino, please.",
     },
@@ -143,8 +135,6 @@ const RolePlayingScenarioQuiz = ({
         quizMode: newMode ?? prevQuiz.quizMode,
         currentQuestion: 0,
         score: 0,
-        showFeedback: false,
-        lastAnswerCorrect: false,
         quizCompleted: false,
         scenarios: newScenarios,
         answers: [],
@@ -191,8 +181,6 @@ const RolePlayingScenarioQuiz = ({
       setQuiz((prevQuiz) => ({
         ...prevQuiz,
         currentQuestion: nextQuestionIndex,
-        showFeedback: false,
-        lastAnswerCorrect: false,
       }));
       setCurrentScenario(sentences[quiz.scenarios[nextQuestionIndex]] || []);
       setCurrentScenarioIndex(0);
@@ -267,6 +255,27 @@ const RolePlayingScenarioQuiz = ({
     }
   };
 
+  const saveCurrentSound = (currentSound: Audio.Sound) => {
+    if (quiz.quizCompleted) {
+      console.warn("Quiz already completed. Cannot save sound.");
+      return;
+    }
+
+    setQuiz((prevQuiz) => ({
+      ...prevQuiz,
+      answers: [...prevQuiz.answers, currentSound],
+    }));
+
+    console.log(
+      `Saved sound for question ${quiz.currentQuestion + 1}. Total answers: ${
+        quiz.answers.length
+      }`
+    );
+
+    // Move to next sentence after saving sound
+    moveToNextSentence();
+  };
+
   if (isLoading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -317,12 +326,10 @@ const RolePlayingScenarioQuiz = ({
           />
         )}
       />
-      <ThemedView style={[styles.navigationContainer]}>
-        <Mic />
-        <Pressable onPress={moveToNextSentence} style={[styles.nextButton]}>
-          <IconSymbol name="arrow.right.square.fill" size={44} color="green" />
-        </Pressable>
-      </ThemedView>
+      <SoundContainer
+        currentScenarioIndex={currentScenarioIndex}
+        saveCurrentSound={saveCurrentSound}
+      />
     </ThemedView>
   );
 };
@@ -434,21 +441,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: "gray",
-  },
-  navigationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-    width: "100%",
-    position: "relative",
-  },
-  nextButton: {
-    backgroundColor: "transparent",
-    padding: 8,
-    borderRadius: 8,
-    position: "absolute",
-    right: 0,
   },
 });
 

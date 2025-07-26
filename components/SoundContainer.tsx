@@ -4,7 +4,12 @@ import { IconSymbol } from "./ui/IconSymbol";
 import { Audio } from "expo-av";
 import { ThemedView } from "./ThemedView";
 
-const Mic = () => {
+interface Props {
+  currentScenarioIndex: number;
+  saveCurrentSound: (sound: Audio.Sound) => void;
+}
+
+const SoundContainer = ({ currentScenarioIndex, saveCurrentSound }: Props) => {
   // State hooks for values that drive UI re-renders
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -32,6 +37,22 @@ const Mic = () => {
       }
     };
   }, []); // Empty dependency array ensures this runs only on unmount.
+
+  useEffect(() => {
+    console.log(
+      "Mic component mounted. Resetting states and preparing for new recording."
+    );
+
+    if (soundRef.current) {
+      // save the current sound and reset the recording and sound states
+      saveCurrentSound(soundRef.current);
+    }
+
+    setRecordingURI(null);
+    setIsPlaying(false);
+    setIsRecording(false);
+    setError(null);
+  }, [currentScenarioIndex]);
 
   async function startRecording() {
     try {
@@ -133,6 +154,38 @@ const Mic = () => {
     }
   }
 
+  async function saveSound() {
+    if (!recordingURI) {
+      Alert.alert("No recording available to save.");
+      return;
+    }
+
+    try {
+      if (!soundRef.current) {
+        console.log("Creating sound object for saving...");
+        const { sound } = await Audio.Sound.createAsync({ uri: recordingURI });
+        soundRef.current = sound;
+      }
+
+      const sound = soundRef.current;
+
+      // clean up current sound and recording before saving and moving onto next question
+      setRecordingURI(null);
+      setIsPlaying(false);
+      setIsRecording(false);
+      recordingRef.current = null;
+      soundRef.current = null;
+
+      console.log("Saving current sound...");
+      saveCurrentSound(sound);
+      console.log("Sound saved successfully.");
+    } catch (err) {
+      console.error("Failed to save sound", err);
+      setError("Failed to save sound. Please try again.");
+      Alert.alert("Error", "Failed to save sound. Please try again.");
+    }
+  }
+
   return (
     <ThemedView style={styles.container}>
       <Pressable
@@ -157,6 +210,18 @@ const Mic = () => {
           color="white"
         />
       </Pressable>
+
+      <Pressable
+        onPress={saveSound}
+        style={[styles.nextButton]}
+        disabled={!recordingURI}
+      >
+        <IconSymbol
+          name="arrow.right.square.fill"
+          size={44}
+          color={!recordingURI ? "#a5d6a7" : "green"}
+        />
+      </Pressable>
     </ThemedView>
   );
 };
@@ -164,8 +229,11 @@ const Mic = () => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+    width: "100%",
+    position: "relative",
   },
   micButton: {
     backgroundColor: "#007AFF",
@@ -182,6 +250,13 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: "#a5d6a7", // A lighter, disabled-looking green
   },
+  nextButton: {
+    backgroundColor: "transparent",
+    padding: 8,
+    borderRadius: 8,
+    position: "absolute",
+    right: 0,
+  },
 });
 
-export default Mic;
+export default SoundContainer;
