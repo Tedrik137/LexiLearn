@@ -6,7 +6,6 @@ import {
   sentences,
   ScenarioSentence,
 } from "../entities/rolePlayingSentences";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { useAuthStore } from "@/stores/authStore";
 import { playSound } from "@/utils/audioUtils";
 import { LanguageCode } from "@/types/languages";
@@ -19,6 +18,7 @@ import {
 } from "react-native";
 import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
 import { IconSymbol } from "./ui/IconSymbol";
+import Mic from "./Mic";
 
 interface Props {
   maxQuestions?: number;
@@ -317,13 +317,12 @@ const RolePlayingScenarioQuiz = ({
           />
         )}
       />
-
-      <Pressable
-        onPress={moveToNextSentence}
-        style={{ backgroundColor: "transparent" }}
-      >
-        <IconSymbol name="arrow.right.square.fill" size={36} color="#007AFF" />
-      </Pressable>
+      <ThemedView style={[styles.navigationContainer]}>
+        <Mic />
+        <Pressable onPress={moveToNextSentence} style={[styles.nextButton]}>
+          <IconSymbol name="arrow.right.square.fill" size={44} color="green" />
+        </Pressable>
+      </ThemedView>
     </ThemedView>
   );
 };
@@ -435,6 +434,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     color: "gray",
+  },
+  navigationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+    width: "100%",
+    position: "relative",
+  },
+  nextButton: {
+    backgroundColor: "transparent",
+    padding: 8,
+    borderRadius: 8,
+    position: "absolute",
+    right: 0,
   },
 });
 
