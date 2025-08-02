@@ -4,6 +4,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useAuthStore } from "@/stores/authStore";
 import { LanguageCode } from "@/types/languages";
+import { stopCurrentSound } from "@/utils/audioUtils";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
@@ -28,7 +29,8 @@ export default function LanguageQuizzes() {
       if (language) {
         setSelectedLanguage(language as LanguageCode);
       }
-    }, [language, setSelectedLanguage])
+      stopCurrentSound();
+    }, [language, setSelectedLanguage, stopCurrentSound])
   );
 
   if (!language) {
@@ -136,6 +138,22 @@ export default function LanguageQuizzes() {
               onPress={() => {
                 // push the english alphabet quiz onto the navigation stack
                 router.push(`/home/${language}/scrambled`);
+              }}
+              style={{ backgroundColor: "transparent" }}
+            >
+              <IconSymbol
+                name="arrow.right.circle"
+                color="navy"
+                style={{ backgroundColor: "transparent" }}
+              />
+            </Pressable>
+          </ThemedView>
+          <ThemedView style={[styles.quizSelectContainer]}>
+            <ThemedText>Role Playing Scenarios</ThemedText>
+            <Pressable
+              onPress={() => {
+                // push the english alphabet quiz onto the navigation stack
+                router.push(`/home/${language}/rolePlaying`);
               }}
               style={{ backgroundColor: "transparent" }}
             >

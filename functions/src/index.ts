@@ -10,6 +10,7 @@ export const updateGoalCheckedStatus = goalFunctions.updateGoalCheckedStatus;
 
 export const initializeUserData = userFunctions.initializeUserData;
 export const getOrCreateTTSAudio = audioFunctions.getOrCreateTTSAudio;
+export const analyzeSpeech = audioFunctions.analyzeSpeech;
 
 export const initializeLeaderboardData =
   leaderboardFunctions.initializeLeaderboardData;

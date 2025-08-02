@@ -23,7 +23,11 @@ const MAPPING = {
   "chevron.left": "chevron-left",
   "arrowtriangle.right.fill": "play-arrow",
   "speaker.slash.fill": "volume-off",
+  "arrow.right.square.fill": "arrow-circle-right",
   goforward: "refresh",
+  "mic.fill": "mic",
+  stop: "stop",
+  "pause.fill": "pause",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],
