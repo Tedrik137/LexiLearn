@@ -7,6 +7,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { FontAwesome } from "@expo/vector-icons";
 import { localizedLanguageProperties } from "@/entities/languageProperties";
 import { IconSymbol } from "./ui/IconSymbol";
+import { useEffect, useState } from "react";
+import LessonHistoryService from "@/services/lessonHistoryService";
 
 interface Props {
   score: number;
@@ -23,14 +25,55 @@ const WordScrambleQuizResults = ({
   quizMode,
   scrambledWords,
 }: Props) => {
-  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU";
+  const user = useAuthStore((state) => state.user);
+  const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
+  const [saving, setSaving] = useState<boolean>(false);
+
+  useEffect(() => {
+    const performSave = async () => {
+      if (!user || !language) {
+        console.warn(
+          "QuizResults: User or language not available, cannot save results."
+        );
+        return;
+      }
+
+      setSaving(true);
+      try {
+        const result = await LessonHistoryService.addLessonEntry({
+          userId: user.uid,
+          language: language,
+          name: "Unscramble Word",
+          score: (score / maxQuestions) * 100,
+          mode: quizMode === "practice" ? "Practice" : "Test",
+          difficulty: "Intermediate",
+        });
+
+        if (result.success) {
+          console.log("Quiz results saved successfully:", result);
+        } else {
+          console.error("Failed to save quiz results:", result.error);
+        }
+      } catch (error) {
+        console.error("Error saving quiz results:", error);
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    performSave();
+  }, []);
 
   return (
     <ThemedView style={styles.container}>
       <ThemedText style={styles.title}>Quiz Complete!</ThemedText>
-      <ThemedText style={styles.subtitle}>
-        Quiz results saved. See them in your profile lesson history.
-      </ThemedText>
+      {saving ? (
+        <ThemedText style={styles.subtitle}>Saving results...</ThemedText>
+      ) : (
+        <ThemedText style={styles.subtitle}>
+          Quiz results saved. See them in your profile lesson history.
+        </ThemedText>
+      )}
 
       <ThemedView style={styles.reviewSection}>
         <ThemedText style={styles.mode}>

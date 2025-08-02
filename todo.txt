@@ -2,8 +2,6 @@ Leaderboard
 Intermediate Quizzes
     Word Scramble
     Role-Playing Scenarios
-        Add picture for each scenario on top
-        Add mic for user to speak into        
         Analyze speech when loading quiz results
         Create results page with analyzed speech vs actual responses
     Fill-in-the-Blank Stories

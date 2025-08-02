@@ -10,23 +10,29 @@ import { useAuthStore } from "@/stores/authStore";
 import { playSound } from "@/utils/audioUtils";
 import { LanguageCode } from "@/types/languages";
 import RolePlayingScenario from "./RolePlayingScenario";
-import { StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import {
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+  Pressable,
+} from "react-native";
 import Carousel, { ICarouselInstance } from "react-native-reanimated-carousel";
 import SoundContainer from "./SoundContainer";
-import { Audio } from "expo-av";
+import QuizProgressBar from "./QuizProgressBar";
+import RolePlayingScenarioQuizResults from "./RolePlayingScenarioQuizResults";
 
 interface Props {
   maxQuestions?: number;
   isScreenFocused: boolean;
 }
 
-type Quiz = {
+export type RolePlayingQuiz = {
   currentQuestion: number;
   score: number;
   quizCompleted: boolean;
   quizMode: string;
   scenarios: string[];
-  answers: Audio.Sound[];
+  answers: { response: string; uri: string }[];
 };
 
 const width = Dimensions.get("window").width;
@@ -54,10 +60,10 @@ const getScenarios = (count: number) => {
 };
 
 const RolePlayingScenarioQuiz = ({
-  maxQuestions = 3,
+  maxQuestions = 1,
   isScreenFocused,
 }: Props) => {
-  const [quiz, setQuiz] = useState<Quiz>({
+  const [quiz, setQuiz] = useState<RolePlayingQuiz>({
     currentQuestion: 0,
     score: 0,
     quizCompleted: false,
@@ -65,6 +71,7 @@ const RolePlayingScenarioQuiz = ({
     scenarios: ["cafe", "library", "park"],
     answers: [],
   });
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const [currentScenario, setCurrentScenario] = useState<ScenarioSentence[]>([
     {
@@ -92,12 +99,53 @@ const RolePlayingScenarioQuiz = ({
   const carouselRef = useRef<ICarouselInstance>(null);
 
   const language = useAuthStore((state) => state.selectedLanguage) || "en-AU"; // Default to English if no language is selected
+  const updateUserXP = useAuthStore((state) => state.updateUserXP);
 
   useEffect(() => {
     setTimeout(() => {
       carouselRef.current?.scrollTo({ index: 0, animated: false });
     }, 0);
   }, [quiz.currentQuestion]);
+
+  useEffect(() => {
+    if (!isScreenFocused) {
+      console.log(
+        "WordScrambleQuiz: XP update effect skipped, screen not focused."
+      );
+      return;
+    }
+
+    if (quiz.quizCompleted) {
+      // Update user XP when the quiz is completed
+      // Calculate XP based on the score from the latest state (prevQuiz.score)
+      const xpGained =
+        quiz.quizMode === "practice"
+          ? Math.floor((quiz.score / maxQuestions) * 100)
+          : Math.floor((quiz.score / maxQuestions) * 250);
+
+      if (xpGained > 0) {
+        console.log(
+          `Quiz completed. Gained ${xpGained} XP for language ${language}.`
+        );
+        try {
+          updateUserXP(xpGained).then(() => {
+            console.log("User XP updated successfully.");
+          });
+        } catch (error) {
+          console.error("Error updating user XP:", error);
+        }
+      }
+    } else {
+      console.log(`Quiz incomplete. Current score: ${quiz.score}`);
+    }
+  }, [
+    quiz.quizCompleted,
+    quiz.score,
+    language,
+    maxQuestions,
+    updateUserXP,
+    isScreenFocused,
+  ]);
 
   // Initialize the quiz when component mounts
   useEffect(() => {
@@ -137,7 +185,6 @@ const RolePlayingScenarioQuiz = ({
         score: 0,
         quizCompleted: false,
         scenarios: newScenarios,
-        answers: [],
       }));
 
       setCurrentScenario(sentences[newScenarios[0]]);
@@ -152,6 +199,8 @@ const RolePlayingScenarioQuiz = ({
         // Play sound only if screen is focused
         const playSequentially = async () => {
           try {
+            setIsPlaying(true);
+
             const firstSentence = sentences[newScenarios[0]][0];
 
             await playSound(
@@ -167,6 +216,8 @@ const RolePlayingScenarioQuiz = ({
             );
           } catch (error) {
             console.error("Error playing sound:", error);
+          } finally {
+            setIsPlaying(false);
           }
         };
 
@@ -189,6 +240,7 @@ const RolePlayingScenarioQuiz = ({
         // Play sound only if screen is focused
         const playSequentially = async () => {
           try {
+            setIsPlaying(true);
             const firstSentence =
               sentences[quiz.scenarios[nextQuestionIndex]][0];
 
@@ -205,6 +257,8 @@ const RolePlayingScenarioQuiz = ({
             );
           } catch (error) {
             console.error("Error playing sound:", error);
+          } finally {
+            setIsPlaying(false);
           }
         };
 
@@ -227,6 +281,7 @@ const RolePlayingScenarioQuiz = ({
         // Play sound only if screen is focused
         const playSequentially = async () => {
           try {
+            setIsPlaying(true);
             const nextSentence = currentScenario[nextIndex];
 
             await playSound(
@@ -242,6 +297,8 @@ const RolePlayingScenarioQuiz = ({
             );
           } catch (error) {
             console.error("Error playing sound:", error);
+          } finally {
+            setIsPlaying(false);
           }
         };
 
@@ -250,30 +307,13 @@ const RolePlayingScenarioQuiz = ({
         playSequentially();
       }
     } else {
-      // Scenario completed, show feedback, move to next question after a delay
+      // Scenario completed, move to next question
       moveToNextQuestion();
     }
   };
 
-  const saveCurrentSound = (currentSound: Audio.Sound) => {
-    if (quiz.quizCompleted) {
-      console.warn("Quiz already completed. Cannot save sound.");
-      return;
-    }
-
-    setQuiz((prevQuiz) => ({
-      ...prevQuiz,
-      answers: [...prevQuiz.answers, currentSound],
-    }));
-
-    console.log(
-      `Saved sound for question ${quiz.currentQuestion + 1}. Total answers: ${
-        quiz.answers.length
-      }`
-    );
-
-    // Move to next sentence after saving sound
-    moveToNextSentence();
+  const toggleQuizMode = () => {
+    setupQuiz(quiz.quizMode === "practice" ? "test" : "practice", 250);
   };
 
   if (isLoading) {
@@ -301,35 +341,105 @@ const RolePlayingScenarioQuiz = ({
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText
-        style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
-      >
-        Role-Playing Scenario Quiz
-      </ThemedText>
-      <ThemedText
-        style={{ fontSize: 16, fontWeight: "light", marginBottom: 10 }}
-      >
-        {quiz.scenarios[quiz.currentQuestion].charAt(0).toUpperCase() +
-          quiz.scenarios[quiz.currentQuestion].slice(1)}
-      </ThemedText>
+      <QuizProgressBar
+        maxSteps={maxQuestions}
+        currentStep={quiz.currentQuestion}
+        marginTop={10}
+      />
 
-      <Carousel
-        width={width}
-        height={500}
-        ref={carouselRef}
-        data={currentScenario}
-        fixedDirection="positive"
-        renderItem={({ item }) => (
-          <RolePlayingScenario
-            scenario={item}
-            scenarioName={quiz.scenarios[quiz.currentQuestion]}
-          />
-        )}
-      />
-      <SoundContainer
-        currentScenarioIndex={currentScenarioIndex}
-        saveCurrentSound={saveCurrentSound}
-      />
+      {!quiz.quizCompleted && (
+        <>
+          <ThemedText
+            style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+          >
+            Role-Playing Scenario Quiz
+          </ThemedText>
+          <ThemedView style={styles.modeToggleContainer}>
+            <Pressable
+              style={[
+                styles.modeButton,
+                quiz.quizMode === "practice" && styles.activeMode,
+              ]}
+              onPress={() => quiz.quizMode !== "practice" && toggleQuizMode()}
+            >
+              <ThemedText style={styles.modeButtonText}>
+                Practice Mode
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.modeButton,
+                quiz.quizMode === "test" && styles.activeMode,
+              ]}
+              onPress={() => quiz.quizMode !== "test" && toggleQuizMode()}
+            >
+              <ThemedText style={styles.modeButtonText}>Test Mode</ThemedText>
+            </Pressable>
+          </ThemedView>
+
+          {quiz.quizMode === "practice" && (
+            <ThemedText style={styles.modeDescription}>
+              Practice Mode: Practice your speaking skills! Repeat the response
+              after the audio is played. Speak into the microphone to record
+              your response. Listen to your response after recording to be sure
+              you want to go to the next sentence.
+            </ThemedText>
+          )}
+
+          {quiz.quizMode === "test" && (
+            <ThemedText style={styles.modeDescription}>
+              Test Mode: Put your practice to the test! Repeat the response
+              after the audio is played. Speak into the microphone to record
+              your response. You can only record once per sentence and will not
+              be able to listen to your response.
+            </ThemedText>
+          )}
+
+          <ThemedText
+            style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
+          >
+            {quiz.scenarios[quiz.currentQuestion].charAt(0).toUpperCase() +
+              quiz.scenarios[quiz.currentQuestion].slice(1)}
+          </ThemedText>
+
+          {currentScenario && (
+            <ThemedView style={styles.container}>
+              <ThemedView pointerEvents={isPlaying ? "none" : "auto"}>
+                <Carousel
+                  width={width}
+                  height={500}
+                  ref={carouselRef}
+                  data={currentScenario}
+                  enabled={false}
+                  fixedDirection="positive"
+                  renderItem={({ item }) => (
+                    <RolePlayingScenario
+                      scenario={item}
+                      scenarioName={quiz.scenarios[quiz.currentQuestion]}
+                    />
+                  )}
+                />
+              </ThemedView>
+              <SoundContainer
+                moveToNextSentence={moveToNextSentence}
+                setQuiz={setQuiz}
+                currentScenario={currentScenario}
+                currentScenarioIndex={currentScenarioIndex}
+                isPromptPlaying={isPlaying}
+                quizMode={quiz.quizMode}
+              />
+            </ThemedView>
+          )}
+        </>
+      )}
+
+      {quiz.quizCompleted && (
+        <RolePlayingScenarioQuizResults
+          answers={quiz.answers}
+          quizMode={quiz.quizMode}
+          setupQuiz={setupQuiz}
+        />
+      )}
     </ThemedView>
   );
 };

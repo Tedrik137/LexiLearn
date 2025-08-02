@@ -1,12 +1,12 @@
 import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
 import { storage } from "./firebaseAdminConfig";
+import { SpeechClient } from "@google-cloud/speech";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 
-// --- NEW: HTTP Callable Function for TTS ---
-export const getOrCreateTTSAudio = functions
-  .runWith({ secrets: ["GOOGLE_TTS_API_KEY"] })
-  .https.onCall(async (data, context) => {
-    // 1. Authentication Check: Ensure the user is authenticated.
+export const getOrCreateTTSAudio = functions.https.onCall(
+  async (data, context) => {
+    // 1. Authentication Check
     if (!context.auth) {
       logger.error("TTS request received without authentication.");
       throw new functions.https.HttpsError(
@@ -14,7 +14,6 @@ export const getOrCreateTTSAudio = functions
         "The function must be called while authenticated."
       );
     }
-    // Optional: Log the UID of the authenticated user making the request
     logger.info(
       `TTS request received from authenticated user: ${context.auth.uid}`
     );
@@ -29,109 +28,147 @@ export const getOrCreateTTSAudio = functions
       );
     }
 
-    if (!process.env.GOOGLE_TTS_API_KEY) {
-      logger.error(
-        "Google TTS API Key is not configured in function environment variables."
-      );
-      throw new functions.https.HttpsError(
-        "internal",
-        "Server configuration error [TTS Key]."
-      );
-    }
-
-    // 3. Logic from your original API route
     try {
-      const bucket = storage.bucket(); // Use initialized storage
-      const filePath = `tts/${fileName}`; // Define path in storage
+      const bucket = storage.bucket();
+      const filePath = `tts/${fileName}`;
       const file = bucket.file(filePath);
 
-      // Check if file exists in Firebase Storage
+      // 3. Check if file exists in Firebase Storage (Cache)
       const [exists] = await file.exists();
 
       if (exists) {
-        try {
-          // Get file contents as base64
-          const [fileBuffer] = await file.download();
-          const base64 = fileBuffer.toString("base64");
-          logger.info(
-            `Returning cached TTS audio from Storage for: ${fileName}`
-          );
-          return { success: true, encodedMP3: base64, source: "firebase" };
-        } catch (downloadError) {
-          logger.error(
-            `Error downloading existing file ${fileName} from Storage:`,
-            downloadError
-          );
-          // Decide if you want to proceed to Google TTS or return error
-          // For simplicity, we'll proceed, but you could throw an error here.
-        }
+        logger.info(`Returning cached TTS audio from Storage for: ${fileName}`);
+        const [fileBuffer] = await file.download();
+        return {
+          success: true,
+          encodedMP3: fileBuffer.toString("base64"),
+          source: "firebase-cache",
+        };
       }
 
-      // File not in firebase or download failed, ask google cloud TTS API
+      // 4. File not in cache, call Google Cloud TTS API via Client Library
       logger.info(
-        `File ${fileName} not found in cache, calling Google TTS API for text: "${text}"`
+        `File ${fileName} not in cache, calling Google TTS API for text: "${text}"`
       );
-      const ttsUrl = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${process.env.GOOGLE_TTS_API_KEY}`;
-      const ttsPayload = {
+
+      // Initialize the client. It uses service account credentials automatically.
+      const ttsClient = new TextToSpeechClient();
+
+      const request = {
         input: { text: text },
-        voice: { languageCode: language, ssmlGender: gender }, // Adjust voice params as needed
-        audioConfig: { audioEncoding: "MP3" },
+        voice: { languageCode: language, ssmlGender: gender },
+        audioConfig: { audioEncoding: "MP3" as const }, // Use 'as const' for type safety
       };
 
-      const ttsResponse = await fetch(ttsUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ttsPayload),
-      });
+      const [ttsResponse] = await ttsClient.synthesizeSpeech(request);
 
-      if (!ttsResponse.ok) {
-        const errorBody = await ttsResponse.text();
-        logger.error(
-          `Google TTS API request failed with status ${ttsResponse.status}: ${errorBody}`
-        );
-        throw new functions.https.HttpsError(
-          "internal", // Or map Google's error status if possible
-          `Google TTS API failed: ${ttsResponse.statusText}`
-        );
-      }
-
-      const ttsData = await ttsResponse.json();
-
-      if (!ttsData.audioContent) {
-        logger.error(
-          "Google TTS API error: No audio content returned",
-          ttsData
-        );
+      if (!ttsResponse.audioContent) {
+        logger.error("Google TTS API error: No audio content returned.");
         throw new functions.https.HttpsError(
           "internal",
           "Google TTS API returned no audio content."
         );
       }
 
-      // Upload to Firebase Storage using Admin SDK
-      const audioBuffer = Buffer.from(ttsData.audioContent as string, "base64");
-      await file.save(audioBuffer, {
+      // 5. Upload the newly generated audio to Firebase Storage for caching
+      // The audioContent is a Uint8Array, which can be saved directly.
+      await file.save(ttsResponse.audioContent, {
         metadata: { contentType: "audio/mp3" },
       });
-      logger.info(`Uploaded TTS audio to ${filePath}`);
+      logger.info(`Uploaded new TTS audio to ${filePath}`);
 
-      // Return the newly generated audio
+      // 6. Return the newly generated audio as a base64 string
+      const encodedMP3 = Buffer.from(ttsResponse.audioContent).toString(
+        "base64"
+      );
+
       return {
         success: true,
-        encodedMP3: ttsData.audioContent, // Already base64 from Google
+        encodedMP3: encodedMP3,
         source: "google-tts",
       };
     } catch (error: any) {
       logger.error(`Error processing TTS request for ${fileName}:`, error);
-      // Throwing HttpsError allows the client SDK to catch it properly
       if (error instanceof functions.https.HttpsError) {
-        throw error; // Re-throw specific HttpsErrors
+        throw error;
       }
-      // Throw a generic internal error for other cases
       throw new functions.https.HttpsError(
         "internal",
         error.message ||
           "An unexpected error occurred processing the TTS request."
       );
     }
-  });
+  }
+);
+
+// --- REFACTORED Speech-to-Text Function ---
+export const analyzeSpeech = functions.https.onCall(async (data, context) => {
+  // 1. Authentication Check
+  if (!context.auth) {
+    logger.error("STT request received without authentication.");
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+  logger.info(
+    `SST request received from authenticated user: ${context.auth.uid}`
+  );
+
+  // 2. Input Validation
+  const { audioUri, recognitionConfig } = data;
+  if (!audioUri || !recognitionConfig) {
+    logger.error("STT request missing required parameters:", data);
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Missing required parameters: audioUri and recognitionConfig."
+    );
+  }
+
+  // Validate that the URI is a Google Cloud Storage URI
+  if (!audioUri.startsWith("gs://")) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "The audioUri must be a valid Google Cloud Storage URI (e.g., gs://bucket-name/file-path)."
+    );
+  }
+
+  try {
+    // 3. Initialize the Google Cloud Speech Client
+    // The client automatically uses the function's service account for auth.
+    const speechClient = new SpeechClient();
+
+    // 4. Construct the request
+    // The client library can read directly from the GCS URI, which is highly efficient.
+    const audio = {
+      uri: audioUri,
+    };
+
+    const request = {
+      audio: audio,
+      config: recognitionConfig, // Use the config passed from the client
+    };
+
+    logger.info("Sending request to Speech-to-Text API with config:", request);
+
+    // 5. Call the API and process the response
+    const [response] = await speechClient.recognize(request);
+    const transcription =
+      response.results
+        ?.map((result) => result.alternatives?.[0].transcript)
+        .join("\n") || "";
+
+    logger.info(`Transcription successful for ${audioUri}: "${transcription}"`);
+
+    return {
+      success: true,
+      transcription: transcription,
+    };
+  } catch (error: any) {
+    logger.error(`Error processing STT request for ${audioUri}`, error);
+    throw new functions.https.HttpsError(
+      "internal",
+      error.message || "An unexpected error occurred during speech analysis."
+    );
+  }
+});
