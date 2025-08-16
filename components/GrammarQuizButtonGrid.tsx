@@ -6,7 +6,6 @@ import { ThemedView } from "./ThemedView";
 import { Pressable, StyleSheet } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { useEffect, useState, useMemo } from "react";
-import { allWordsByLanguage } from "@/entities/pictureWordBank";
 
 interface Props {
   language: LanguageCode;
@@ -16,38 +15,15 @@ interface Props {
   onAnswerSubmit: (selected: string) => void;
   showFeedback: boolean;
   isLastAnswerCorrect: boolean;
+  words: string[];
 }
 
-const getRandomWords = (
-  correctWord: string,
-  allWordsForLanguage: string[],
-  totalOptions: number = 4
-): string[] => {
-  // 1. Create a pool of distractor words by filtering out the correct word.
-  let distractors = allWordsForLanguage.filter((word) => word !== correctWord);
+/**
+ * Generate an array of word options that includes the target word
+ * and random distractors
+ */
 
-  // 2. Shuffle the distractors using the Fisher-Yates algorithm for an unbiased result.
-  for (let i = distractors.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
-  }
-
-  // 3. Select the required number of distractors from the top of the shuffled list.
-  const selectedDistractors = distractors.slice(0, totalOptions - 1);
-
-  // 4. Add the correct word to the options.
-  const finalOptions = [...selectedDistractors, correctWord];
-
-  // 5. Shuffle the final options one last time to randomize the position of the correct answer.
-  for (let i = finalOptions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [finalOptions[i], finalOptions[j]] = [finalOptions[j], finalOptions[i]];
-  }
-
-  return finalOptions;
-};
-
-const PictureButtonGrid = ({
+const GrammarQuizButtonGrid = ({
   language,
   currentTarget,
   showFeedback,
@@ -55,16 +31,9 @@ const PictureButtonGrid = ({
   quizMode,
   onAnswerSubmit,
   isLastAnswerCorrect,
+  words,
 }: Props) => {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-
-  // Generate word options - using useMemo for performance
-  const words = useMemo(() => {
-    // **FIX: Select the correct word list based on the language prop**
-    const allWordsForLanguage =
-      allWordsByLanguage[language] || allWordsByLanguage["en-AU"]; // Default to English if language not found
-    return getRandomWords(currentTarget, allWordsForLanguage, 4);
-  }, [currentTarget, currentQuestion, quizMode, language]); // Add language dependency
 
   // Reset selection when question changes
   useEffect(() => {
@@ -72,8 +41,10 @@ const PictureButtonGrid = ({
   }, [currentQuestion, quizMode]);
 
   const handleSelect = (word: string) => {
+    if (quizMode !== "test") {
+      playSound(word, language);
+    }
     // Play the sound when selected
-    playSound(word, language);
     setSelectedWord(word);
   };
 
@@ -103,7 +74,7 @@ const PictureButtonGrid = ({
       <ThemedView style={[styles.container]}>
         <LetterSoundButton
           onPress={() => handleSelect(words[0])}
-          size={language === "ja-JP" ? 160 : 120}
+          size={140}
           selected={selectedWord === words[0]}
           disabled={showFeedback}
         >
@@ -112,7 +83,7 @@ const PictureButtonGrid = ({
         </LetterSoundButton>
         <LetterSoundButton
           onPress={() => handleSelect(words[1])}
-          size={language === "ja-JP" ? 160 : 120}
+          size={140}
           selected={selectedWord === words[1]}
           disabled={showFeedback}
         >
@@ -123,7 +94,7 @@ const PictureButtonGrid = ({
       <ThemedView style={[styles.container]}>
         <LetterSoundButton
           onPress={() => handleSelect(words[2])}
-          size={language === "ja-JP" ? 160 : 120}
+          size={140}
           selected={selectedWord === words[2]}
           disabled={showFeedback}
         >
@@ -132,7 +103,7 @@ const PictureButtonGrid = ({
         </LetterSoundButton>
         <LetterSoundButton
           onPress={() => handleSelect(words[3])}
-          size={language === "ja-JP" ? 160 : 120}
+          size={140}
           selected={selectedWord === words[3]}
           disabled={showFeedback}
         >
@@ -232,4 +203,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PictureButtonGrid;
+export default GrammarQuizButtonGrid;

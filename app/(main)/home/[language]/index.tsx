@@ -113,7 +113,7 @@ export default function LanguageQuizzes() {
                 // push the english alphabet quiz onto the navigation stack
                 router.push(`/home/${language}/picture`);
               }}
-              disabled={currentLanguageProgress.level < 10}
+              disabled={currentLanguageProgress.level < 0}
             >
               <IconSymbol name="arrow.right.circle" color="navy" />
             </Pressable>
@@ -132,14 +132,44 @@ export default function LanguageQuizzes() {
           Completing quizzes will give you XP and unlock more quizzes.
         </ThemedText>
         <ThemedView style={[styles.container]}>
-          <ThemedView style={[styles.quizSelectContainer]}>
-            <ThemedText>Unscramble Word?</ThemedText>
+          {language !== "ja-JP" && (
+            <ThemedView style={[styles.quizSelectContainer]}>
+              <ThemedText>Unscramble Word?</ThemedText>
+              <Pressable
+                onPress={() => {
+                  // push the english alphabet quiz onto the navigation stack
+                  router.push(`/home/${language}/scrambled`);
+                }}
+                style={{ backgroundColor: "transparent" }}
+              >
+                <IconSymbol
+                  name="arrow.right.circle"
+                  color="navy"
+                  style={{ backgroundColor: "transparent" }}
+                />
+              </Pressable>
+            </ThemedView>
+          )}
+          <ThemedView
+            style={[
+              styles.quizSelectContainer,
+              language !== "ja-JP"
+                ? currentLanguageProgress.level >= 5
+                  ? { opacity: 1 }
+                  : { opacity: 0.5 }
+                : { opacity: 1 },
+            ]}
+          >
+            <ThemedText>Fill in the Blank Grammar</ThemedText>
             <Pressable
               onPress={() => {
                 // push the english alphabet quiz onto the navigation stack
-                router.push(`/home/${language}/scrambled`);
+                router.push(`/home/${language}/fillInTheBlankGrammar`);
               }}
               style={{ backgroundColor: "transparent" }}
+              disabled={
+                language !== "ja-JP" ? currentLanguageProgress.level < 5 : false
+              }
             >
               <IconSymbol
                 name="arrow.right.circle"
@@ -148,7 +178,18 @@ export default function LanguageQuizzes() {
               />
             </Pressable>
           </ThemedView>
-          <ThemedView style={[styles.quizSelectContainer]}>
+          <ThemedView
+            style={[
+              styles.quizSelectContainer,
+              language !== "ja-JP"
+                ? currentLanguageProgress.level >= 10
+                  ? { opacity: 1 }
+                  : { opacity: 0.5 }
+                : currentLanguageProgress.level >= 5
+                ? { opacity: 1 }
+                : { opacity: 0.5 },
+            ]}
+          >
             <ThemedText>Role Playing Scenarios</ThemedText>
             <Pressable
               onPress={() => {
@@ -156,6 +197,11 @@ export default function LanguageQuizzes() {
                 router.push(`/home/${language}/rolePlaying`);
               }}
               style={{ backgroundColor: "transparent" }}
+              disabled={
+                language !== "ja-JP"
+                  ? currentLanguageProgress.level < 10
+                  : currentLanguageProgress.level < 5
+              }
             >
               <IconSymbol
                 name="arrow.right.circle"

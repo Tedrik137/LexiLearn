@@ -3,7 +3,6 @@ import { ThemedView } from "./ThemedView";
 import Confetti from "./Confetti";
 import { ThemedText } from "./ThemedText";
 import { Pressable, ScrollView, StyleSheet } from "react-native";
-import { Image } from "expo-image";
 import { useAuthStore } from "@/stores/authStore";
 import LessonHistoryService from "@/services/lessonHistoryService";
 
@@ -11,11 +10,16 @@ interface Props {
   quizMode: string;
   score: number;
   maxQuestions: number;
-  answers: { question: string; userAnswer: string; correct: boolean }[];
+  answers: {
+    question: string;
+    userAnswer: string;
+    correctAnswer: string;
+    correct: boolean;
+  }[];
   setupQuiz: () => void;
 }
 
-export default function SpotTheWordQuizResults({
+export default function GrammarQuizResults({
   setupQuiz,
   quizMode,
   score,
@@ -40,10 +44,10 @@ export default function SpotTheWordQuizResults({
         const result = await LessonHistoryService.addLessonEntry({
           userId: user.uid,
           language: language,
-          name: "Spot the Word?",
+          name: "Fill-in-the-Blank Grammar Quiz",
           score: (score / maxQuestions) * 100,
           mode: quizMode === "practice" ? "Practice" : "Test",
-          difficulty: "Beginner",
+          difficulty: "Intermediate",
         });
 
         if (result.success) {
@@ -65,9 +69,11 @@ export default function SpotTheWordQuizResults({
     <ThemedView style={styles.resultContainer}>
       <ThemedText style={styles.resultTitle}>Quiz Complete!</ThemedText>
       {saving ? (
-        <ThemedText>Saving your results...</ThemedText>
+        <ThemedText style={{ textAlign: "center", marginBottom: 10 }}>
+          Saving your results...
+        </ThemedText>
       ) : (
-        <ThemedText>
+        <ThemedText style={{ textAlign: "center", marginBottom: 10 }}>
           Quiz results saved. See them in your profile lesson history.
         </ThemedText>
       )}
@@ -82,23 +88,27 @@ export default function SpotTheWordQuizResults({
         showsVerticalScrollIndicator={true} // Optional: Show scrollbar
       >
         {answers.map((answer, index) => (
-          <ThemedView key={index} style={[styles.answerContainer]}>
-            <ThemedText style={[styles.questionText]}>
+          <ThemedView key={index} style={styles.answerBlock}>
+            <ThemedText style={styles.questionText}>
               {index + 1}. {answer.question}
             </ThemedText>
-            <ThemedText style={[styles.correctIndicator]}>
-              {answer.correct ? "  ✅ " : "  ❌ "}
-            </ThemedText>
 
-            {/* Fixed-width container for incorrect answers (to align checkmarks) */}
-            <ThemedView style={styles.feedbackContainer}>
-              {!answer.correct && (
-                <ThemedText style={styles.incorrectText}>
-                  {" "}
-                  (You chose: {answer.userAnswer})
-                </ThemedText>
-              )}
+            <ThemedView style={styles.userAnswerRow}>
+              <ThemedText
+                style={
+                  answer.correct ? styles.correctText : styles.incorrectText
+                }
+              >
+                Your answer: {answer.userAnswer}
+              </ThemedText>
+              <ThemedText>{answer.correct ? "✅" : "❌"}</ThemedText>
             </ThemedView>
+
+            {!answer.correct && (
+              <ThemedText style={styles.correctAnswerText}>
+                Correct answer: {answer.correctAnswer}
+              </ThemedText>
+            )}
           </ThemedView>
         ))}
       </ScrollView>
@@ -115,9 +125,8 @@ export default function SpotTheWordQuizResults({
 
 const styles = StyleSheet.create({
   resultContainer: {
+    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 0,
     padding: 20,
   },
   resultTitle: {
@@ -132,11 +141,12 @@ const styles = StyleSheet.create({
   },
   reviewText: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 10,
+    alignSelf: "flex-start",
   },
   resultScore: {
     fontSize: 20,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   resetButton: {
     backgroundColor: "blue",
@@ -149,40 +159,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  answerContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    width: "100%",
-  },
-  resultsImage: {
-    width: 44,
-    height: 44,
-  },
   scrollView: {
-    maxHeight: 300, // Adjust height as needed
     width: "100%",
   },
   scrollContent: {
-    alignItems: "flex-start",
     paddingBottom: 20,
-    rowGap: 10,
+  },
+  // --- NEW STYLES FOR STACKED LAYOUT ---
+  answerBlock: {
+    width: "100%",
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
   },
   questionText: {
-    minWidth: 80, // Ensure questions align correctly
-    textAlign: "left",
-    flexShrink: 1, // Prevents text from overflowing
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8,
   },
-  correctIndicator: {
-    minWidth: 30, // Consistent width for check/cross
-    textAlign: "center",
+  userAnswerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   incorrectText: {
-    flexShrink: 1, // Allows text to wrap if needed
-    color: "red",
+    color: "#D32F2F", // A darker red for better readability
+    fontSize: 15,
+    flex: 1, // Allow text to wrap
   },
-  feedbackContainer: {
-    minWidth: 150, // Ensures consistent spacing even if empty
+  correctText: {
+    color: "#388E3C", // A darker green
+    fontSize: 15,
+    flex: 1,
+  },
+  correctAnswerText: {
+    marginTop: 6,
+    color: "#555",
+    fontStyle: "italic",
   },
 });
