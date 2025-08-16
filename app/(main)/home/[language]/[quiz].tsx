@@ -13,6 +13,7 @@ import { useIsFocused } from "@react-navigation/native";
 import ScrambledWord from "@/components/ScrambledWord";
 import WordScrambleQuiz from "@/components/WordScrambleQuiz";
 import RolePlayingScenarioQuiz from "@/components/RolePlayingScenarioQuiz";
+import GrammarQuiz from "@/components/GrammarQuiz";
 
 export default function LanguageQuiz() {
   let { proficiency, language, quiz } = useLocalSearchParams();
@@ -112,6 +113,18 @@ export default function LanguageQuiz() {
         canPopNavigation={true}
       >
         <RolePlayingScenarioQuiz isScreenFocused={isFocused} />
+      </CustomScrollView>
+    );
+  }
+
+  if (quiz === "fillInTheBlankGrammar") {
+    // Handle role playing scenario quiz logic here
+    return (
+      <CustomScrollView
+        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        canPopNavigation={true}
+      >
+        <GrammarQuiz isScreenFocused={isFocused} />
       </CustomScrollView>
     );
   }

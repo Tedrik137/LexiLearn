@@ -42,7 +42,7 @@ export default function PictureQuizResults({
         const result = await LessonHistoryService.addLessonEntry({
           userId: user.uid,
           language: language,
-          name: "What's that Letter?",
+          name: "What's that Picture?",
           score: (score / maxQuestions) * 100,
           mode: quizMode === "practice" ? "Practice" : "Test",
           difficulty: "Beginner",
