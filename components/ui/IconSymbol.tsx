@@ -28,6 +28,7 @@ const MAPPING = {
   "mic.fill": "mic",
   stop: "stop",
   "pause.fill": "pause",
+  "arrow.counterclockwise.circle.fill": "replay",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],
