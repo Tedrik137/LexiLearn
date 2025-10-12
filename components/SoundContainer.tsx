@@ -23,6 +23,7 @@ interface Props {
   currentScenarioIndex: number;
   isPromptPlaying: boolean;
   quizMode: string;
+  replayPrompt: () => void;
 }
 
 // Define a new preset optimized for Google Speech-to-Text
@@ -59,6 +60,7 @@ const SoundContainer = ({
   currentScenarioIndex,
   isPromptPlaying,
   quizMode,
+  replayPrompt,
 }: Props) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -244,6 +246,23 @@ const SoundContainer = ({
       <ThemedView style={styles.buttonContainer}>
         <Pressable
           style={[
+            styles.replayButton,
+            isPromptPlaying && styles.disabledRecordingButton,
+          ]}
+          onPress={() => {
+            if (!isPromptPlaying) {
+              replayPrompt();
+            }
+          }}
+        >
+          <IconSymbol
+            name="arrow.counterclockwise.circle.fill"
+            size={44}
+            color="white"
+          />
+        </Pressable>
+        <Pressable
+          style={[
             styles.micButton,
             (isSaving ||
               isPromptPlaying ||
@@ -272,51 +291,47 @@ const SoundContainer = ({
             <ThemedText style={[styles.helpText]}></ThemedText>
           </>
         )}
-      </ThemedView>
-
-      {quizMode !== "test" && (
-        <Pressable
-          style={[
-            styles.playButton,
-            (!recordingURI ||
+        {quizMode !== "test" && (
+          <Pressable
+            style={[
+              styles.playButton,
+              (!recordingURI ||
+                isSaving ||
+                isPromptPlaying ||
+                (quizMode === "test" && recordingURI != null)) &&
+                styles.disabledPlayButton,
+            ]}
+            onPress={isPlaying ? pauseSound : playSound}
+            disabled={
+              !recordingURI ||
               isSaving ||
               isPromptPlaying ||
-              (quizMode === "test" && recordingURI != null)) &&
-              styles.disabledPlayButton,
-          ]}
-          onPress={isPlaying ? pauseSound : playSound}
-          disabled={
-            !recordingURI ||
-            isSaving ||
-            isPromptPlaying ||
-            (quizMode === "test" && recordingURI != null)
-          }
-        >
-          <IconSymbol
-            name={isPlaying ? "pause.fill" : "arrowtriangle.right.fill"}
-            size={44}
-            color="white"
-          />
-        </Pressable>
-      )}
-      <Pressable
-        onPress={saveSound}
-        style={[
-          quizMode === "test" && recordingURI !== null && { top: 24 },
-          styles.nextButton,
-        ]}
-        disabled={!recordingURI || isSaving}
-      >
-        {isSaving ? (
-          <ActivityIndicator color="green" />
-        ) : (
-          <IconSymbol
-            name="arrow.right.square.fill"
-            size={44}
-            color={!recordingURI ? "#a5d6a7" : "green"}
-          />
+              (quizMode === "test" && recordingURI != null)
+            }
+          >
+            <IconSymbol
+              name={isPlaying ? "pause.fill" : "arrowtriangle.right.fill"}
+              size={44}
+              color="white"
+            />
+          </Pressable>
         )}
-      </Pressable>
+        <Pressable
+          onPress={saveSound}
+          style={[quizMode === "test" && styles.nextButton]}
+          disabled={!recordingURI || isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator color="green" />
+          ) : (
+            <IconSymbol
+              name="arrow.right.square.fill"
+              size={44}
+              color={!recordingURI ? "#a5d6a7" : "green"}
+            />
+          )}
+        </Pressable>
+      </ThemedView>
     </ThemedView>
   );
 };
@@ -329,6 +344,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     width: "100%",
     position: "relative",
+  },
+  replayButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 50,
+    padding: 20,
   },
   micButton: {
     backgroundColor: "#007AFF",
@@ -346,12 +366,13 @@ const styles = StyleSheet.create({
   disabledRecordingButton: {
     backgroundColor: "#b0bec5",
   },
+  disabledReplayButton: {
+    backgroundColor: "#b0bec5",
+  },
   nextButton: {
     backgroundColor: "transparent",
     padding: 8,
     borderRadius: 8,
-    position: "absolute",
-    right: 0,
   },
   helpText: {
     marginTop: 8,
@@ -360,10 +381,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   buttonContainer: {
-    flexDirection: "column",
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    margin: 10,
+    gap: 10,
   },
 });
 

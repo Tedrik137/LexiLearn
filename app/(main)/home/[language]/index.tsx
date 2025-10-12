@@ -182,10 +182,10 @@ export default function LanguageQuizzes() {
             style={[
               styles.quizSelectContainer,
               language !== "ja-JP"
-                ? currentLanguageProgress.level >= 10
+                ? currentLanguageProgress.level >= 1
                   ? { opacity: 1 }
                   : { opacity: 0.5 }
-                : currentLanguageProgress.level >= 5
+                : currentLanguageProgress.level >= 1
                 ? { opacity: 1 }
                 : { opacity: 0.5 },
             ]}
@@ -199,8 +199,8 @@ export default function LanguageQuizzes() {
               style={{ backgroundColor: "transparent" }}
               disabled={
                 language !== "ja-JP"
-                  ? currentLanguageProgress.level < 10
-                  : currentLanguageProgress.level < 5
+                  ? currentLanguageProgress.level < 1
+                  : currentLanguageProgress.level < 1
               }
             >
               <IconSymbol

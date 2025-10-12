@@ -3,7 +3,7 @@ import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import {
   descriptions,
-  sentences,
+  rolePlayingSentences,
   ScenarioSentence,
 } from "../entities/rolePlayingSentences";
 import { useAuthStore } from "@/stores/authStore";
@@ -159,7 +159,7 @@ const RolePlayingScenarioQuiz = ({
         `QuizContainer: Effect for setupQuiz. Screen NOT focused. Language: ${language}. Skipping setup.`
       );
     }
-  }, [descriptions, sentences, isScreenFocused]);
+  }, [descriptions, rolePlayingSentences, language, isScreenFocused]);
 
   const setupQuiz = (newMode?: string, delay = 0) => {
     if (!isScreenFocused && !isLoading) {
@@ -187,11 +187,11 @@ const RolePlayingScenarioQuiz = ({
         scenarios: newScenarios,
       }));
 
-      setCurrentScenario(sentences[newScenarios[0]]);
+      setCurrentScenario(rolePlayingSentences[language][newScenarios[0]]);
       setIsLoading(false);
       console.log(
         `QuizContainer: Quiz setup complete. First prompt: ${
-          sentences[newScenarios[0]][0].response
+          rolePlayingSentences[language][newScenarios[0]][0].response
         }`
       );
 
@@ -201,10 +201,13 @@ const RolePlayingScenarioQuiz = ({
           try {
             setIsPlaying(true);
 
-            const firstSentence = sentences[newScenarios[0]][0];
+            const firstSentence =
+              rolePlayingSentences[language][newScenarios[0]][0];
 
             await playSound(
-              `The ${firstSentence.character} says: ${firstSentence.prompt}`,
+              `The ${firstSentence.character} ${
+                language === "ja-JP" ? `say` : `says`
+              }: ${firstSentence.prompt}`,
               language as LanguageCode,
               "FEMALE"
             );
@@ -233,7 +236,9 @@ const RolePlayingScenarioQuiz = ({
         ...prevQuiz,
         currentQuestion: nextQuestionIndex,
       }));
-      setCurrentScenario(sentences[quiz.scenarios[nextQuestionIndex]] || []);
+      setCurrentScenario(
+        rolePlayingSentences[language][quiz.scenarios[nextQuestionIndex]] || []
+      );
       setCurrentScenarioIndex(0);
 
       if (isScreenFocused) {
@@ -242,10 +247,14 @@ const RolePlayingScenarioQuiz = ({
           try {
             setIsPlaying(true);
             const firstSentence =
-              sentences[quiz.scenarios[nextQuestionIndex]][0];
+              rolePlayingSentences[language][
+                quiz.scenarios[nextQuestionIndex]
+              ][0];
 
             await playSound(
-              `The ${firstSentence.character} says: ${firstSentence.prompt}`,
+              `The ${firstSentence.character} ${
+                language === "ja-JP" ? `say` : `says`
+              }: ${firstSentence.prompt}`,
               language as LanguageCode,
               "FEMALE"
             );
@@ -285,7 +294,9 @@ const RolePlayingScenarioQuiz = ({
             const nextSentence = currentScenario[nextIndex];
 
             await playSound(
-              `The ${nextSentence.character} says: ${nextSentence.prompt}`,
+              `The ${nextSentence.character} ${
+                language === "ja-JP" ? `say` : `says`
+              }: ${nextSentence.prompt}`,
               language as LanguageCode,
               "FEMALE"
             );
@@ -309,6 +320,32 @@ const RolePlayingScenarioQuiz = ({
     } else {
       // Scenario completed, move to next question
       moveToNextQuestion();
+    }
+  };
+
+  const replayPrompt = async () => {
+    if (isPlaying) return;
+    try {
+      setIsPlaying(true);
+      const currentSentence = currentScenario[currentScenarioIndex];
+
+      await playSound(
+        `The ${currentSentence.character} ${
+          language === "ja-JP" ? `say` : `says`
+        }: ${currentSentence.prompt}`,
+        language as LanguageCode,
+        "FEMALE"
+      );
+
+      await playSound(
+        `You say: ${currentSentence.response}`,
+        language as LanguageCode,
+        "MALE"
+      );
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    } finally {
+      setIsPlaying(false);
     }
   };
 
@@ -427,6 +464,7 @@ const RolePlayingScenarioQuiz = ({
                 currentScenarioIndex={currentScenarioIndex}
                 isPromptPlaying={isPlaying}
                 quizMode={quiz.quizMode}
+                replayPrompt={replayPrompt}
               />
             </ThemedView>
           )}
